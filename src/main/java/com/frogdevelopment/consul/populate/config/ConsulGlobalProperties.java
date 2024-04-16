@@ -13,9 +13,15 @@ public class ConsulGlobalProperties {
      */
     private String httpAddress;
 
-    private String version;
+    /**
+     * The path where the configuration is stored. Default to `config`
+     */
+    private String configPath = "config";
 
-    private String configPath;
+    /**
+     * Version of the current configuration. Will be added to the `configPath`
+     */
+    private String version;
 
     private Type type;
 

@@ -1,24 +1,29 @@
-## Micronaut 4.3.8 Documentation
+## Consul Populate (WIP)
 
-- [User Guide](https://docs.micronaut.io/4.3.8/guide/index.html)
-- [API Reference](https://docs.micronaut.io/4.3.8/api/index.html)
-- [Configuration Reference](https://docs.micronaut.io/4.3.8/guide/configurationreference.html)
-- [Micronaut Guides](https://guides.micronaut.io/index.html)
+Concept: give a tool to easily push content in Consul KV to be used as distributed configurations
 
----
+## Configuration
 
-- [Micronaut Gradle Plugin documentation](https://micronaut-projects.github.io/micronaut-gradle-plugin/latest/)
-- [GraalVM Gradle Plugin documentation](https://graalvm.github.io/native-build-tools/latest/gradle-plugin.html)
-- [Shadow Gradle Plugin](https://plugins.gradle.org/plugin/com.github.johnrengelman.shadow)
+- `consul.http_address`: Address of the Consul to populate
+- `consul.configPath`: The path where the configuration is stores. Default to *config*
+- `consul.version`: Version of the current configuration. Will be added to the `configPath`
+- `consul.type`: (FILES | GIT) Type of data used to be export into Consul
 
-## Feature serialization-jackson documentation
+### About the KV name format
 
-- [Micronaut Serialization Jackson Core documentation](https://micronaut-projects.github.io/micronaut-serialization/latest/guide/)
+Read [Micronaut#HashiCorp Consul Support](https://docs.micronaut.io/4.3.14/guide/#distributedConfigurationConsul)
 
-## Feature lombok documentation
+Note that the format of the KV in case of profile/environment is `{file_name},{profile}`
 
-- [Micronaut Project Lombok documentation](https://docs.micronaut.io/latest/guide/index.html#lombok)
+## Populate by files
 
-- [https://projectlombok.org/features/all](https://projectlombok.org/features/all)
+Parameters:
 
+- `consul.files.rootPath`: path to root directory
+- `consul.files.target`: subdirectory used to override root configurations
+- `consul.files.format`: (YAML | JSON | PROPERTIES) Supported format of the files
 
+## Populate by git
+
+**not yet implemented**
+Alternative to [git2consul](https://github.com/breser/git2consul) which is not maintained anymore.
