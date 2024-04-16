@@ -16,6 +16,7 @@ import io.micronaut.test.annotation.MockBean;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 
 @MicronautTest
+@Property(name = "consul.type", value = "FILES")
 @Property(name = "consul.files.format", value = "JSON")
 class JsonFilesImporterIntegrationTest {
 

@@ -16,4 +16,10 @@ public class ConsulGlobalProperties {
     private String version;
 
     private String configPath;
+
+    private Type type;
+
+    enum Type {
+        FILES, GIT
+    }
 }
