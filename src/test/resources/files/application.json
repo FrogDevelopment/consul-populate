@@ -1,0 +1,32 @@
+{
+  "very": {
+    "deep": {
+      "nested": {
+        "field": {
+          "that": {
+            "will": {
+              "be": {
+                "overridden": "coucou"
+              },
+              "but": {
+                "not": "here"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "foo": {
+    "bar": "my_value",
+    "baz": "to_keep"
+  },
+  "collections": {
+    "items": [
+      "item_A",
+      "item_B",
+      "item_C"
+    ]
+  },
+  "simple-value": "kept"
+}

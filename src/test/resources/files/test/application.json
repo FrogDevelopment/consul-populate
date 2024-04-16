@@ -1,0 +1,28 @@
+{
+  "foo": {
+    "bar": "new_value"
+  },
+  "very": {
+    "deep": {
+      "nested": {
+        "field": {
+          "that": {
+            "will": {
+              "be": {
+                "overridden": "salut"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "something": {
+    "new": true
+  },
+  "collections": {
+    "items": [
+      "item_C"
+    ]
+  }
+}

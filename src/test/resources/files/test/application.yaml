@@ -1,0 +1,16 @@
+foo:
+  bar: new_value
+very:
+  deep:
+    nested:
+      field:
+        that:
+          will:
+            be:
+              overridden: salut
+something:
+  new: true
+
+collection:
+  items:
+    - item_C
