@@ -3,11 +3,13 @@ package com.frogdevelopment.consul.populate.files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.inject.Singleton;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.micronaut.context.annotation.Requires;
@@ -28,14 +30,17 @@ public final class JsonFilesImporter extends FilesImporter {
 
     @Override
     protected boolean isExtensionAccepted(@NonNull final String extension) {
-        return EXTENSIONS.contains(extension);
+        return EXTENSIONS.contains(extension.toLowerCase());
     }
 
     @NonNull
     @Override
     protected Map<String, Object> readFile(@NonNull final File file) throws IOException {
         try (var reader = Files.newBufferedReader(file.toPath())) {
-            return objectMapper.readValue(reader, Map.class);
+            final var typeRef
+                    = new TypeReference<LinkedHashMap<String, Object>>() {
+            };
+            return objectMapper.readValue(reader, typeRef);
         }
     }
 

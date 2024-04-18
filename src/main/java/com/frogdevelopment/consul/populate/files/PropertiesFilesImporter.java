@@ -24,7 +24,7 @@ public final class PropertiesFilesImporter extends FilesImporter {
 
     @Override
     protected boolean isExtensionAccepted(@NonNull final String extension) {
-        return EXTENSIONS.contains(extension);
+        return EXTENSIONS.contains(extension.toLowerCase());
     }
 
     @NonNull

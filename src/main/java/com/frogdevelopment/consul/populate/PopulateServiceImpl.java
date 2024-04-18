@@ -1,10 +1,15 @@
 package com.frogdevelopment.consul.populate;
 
+import static com.frogdevelopment.consul.populate.VertxUtils.toBlocking;
+
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import jakarta.inject.Singleton;
 
 import com.frogdevelopment.consul.populate.config.ConsulGlobalProperties;
 
@@ -14,6 +19,7 @@ import io.vertx.ext.consul.TxnKVVerb;
 import io.vertx.ext.consul.TxnRequest;
 
 @Slf4j
+@Singleton
 @RequiredArgsConstructor
 public class PopulateServiceImpl {
 
@@ -21,52 +27,60 @@ public class PopulateServiceImpl {
     private final ConsulGlobalProperties consulGlobalProperties;
     private final DataImporter dataImporter;
 
-    @SneakyThrows // temporary
     public void populate() {
-        log.info("### PUSHING DATA IN KV STORAGE for version=$KV_VERSION and target=$CONF_TARGET");
+        try {
+            toBlocking(consulClient.leaderStatus());
+        } catch (Exception e) {
+            throw new IllegalStateException("Consul is not reachable/ready to be populate. Please check error logs", e);
+        }
 
-        // 1. check Consul connection ?
-//        consulClient.healthState()
+        final var configPath = consulGlobalProperties.getConfigPath();
 
         // Importing data from configured type
-        var configToImport = dataImporter.execute();
+        var configsToImport = dataImporter.execute()
+                .entrySet()
+                .stream().collect(Collectors.toMap(entry -> configPath + '/' + entry.getKey(), Map.Entry::getValue));
 
         // Create/Update/Delete config
         final var txnRequest = new TxnRequest();
-        configToImport.entrySet()
+        configsToImport.entrySet()
                 .stream()
-                .map(entry -> new TxnKVOperation()
-                        .setKey(entry.getKey())
-                        .setValue(entry.getValue())
-                        .setType(TxnKVVerb.SET))
+                .map(toSetOperation())
                 .forEach(txnRequest::addOperation);
 
-        // retrieve current config in Consul KV
-        final var configPath = consulGlobalProperties.getConfigPath();
-        final var version = consulGlobalProperties.getVersion();
-        var existingKeysInConsul = consulClient.getKeys(configPath + "/" + version)
-                .toCompletionStage()
-                .toCompletableFuture()
-                .get();
+        // retrieve current configs in Consul KV
+        var existingKeysInConsul = toBlocking(consulClient.getKeys(configPath));
 
+        // keep only those that are to be deleted (no present anymore in the data pushed)
         existingKeysInConsul.stream()
-                .filter(Predicate.not(configToImport::containsKey))
-                .map(key -> new TxnKVOperation()
-                        .setKey(key)
-                        .setType(TxnKVVerb.DELETE))
+                .filter(Predicate.not(configsToImport::containsKey))
+                .map(toDeleteOperation())
                 .forEach(txnRequest::addOperation);
 
-        consulClient.transaction(txnRequest).onComplete(res -> {
-            if (res.succeeded()) {
-                final var result = res.result();
-                log.info("succeeded results size: {}", result.getResultsSize());
-                log.info("errors size: {}", result.getErrorsSize());
-                if (result.getErrorsSize() > 0) {
-                    result.getErrors().forEach(txnError -> log.error("error: {}", txnError.getWhat()));
-                }
-            } else {
-                log.error(res.cause().getMessage(), res.cause());
-            }
-        });
+        var result = toBlocking(consulClient.transaction(txnRequest));
+        log.info("succeeded results size: {}", result.getResultsSize());
+        log.info("errors size: {}", result.getErrorsSize());
+        if (result.getErrorsSize() > 0) {
+            result.getErrors().forEach(txnError -> log.error("error: {}", txnError.getWhat()));
+        }
+
+        if (result.getResultsSize() + result.getErrorsSize() != txnRequest.getOperationsSize()) {
+            log.warn("Some operations where not executed");
+            // todo handle this case
+        }
     }
+
+    private static Function<Map.Entry<String, String>, TxnKVOperation> toSetOperation() {
+        return entry -> new TxnKVOperation()
+                .setKey(entry.getKey())
+                .setValue(entry.getValue())
+                .setType(TxnKVVerb.SET);
+    }
+
+    private static Function<String, TxnKVOperation> toDeleteOperation() {
+        return key -> new TxnKVOperation()
+                .setKey(key)
+                .setType(TxnKVVerb.DELETE);
+    }
+
 }

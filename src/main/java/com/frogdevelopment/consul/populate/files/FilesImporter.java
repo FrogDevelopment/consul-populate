@@ -23,7 +23,7 @@ abstract sealed class FilesImporter implements DataImporter
 
     @NonNull
     @Override
-    public Map<String, String> execute() throws IOException {
+    public Map<String, String> execute() {
         // validate paths
         final var rootPath = Paths.get(fileProperties.getRootPath());
         if (!rootPath.toFile().exists()) {
@@ -46,36 +46,40 @@ abstract sealed class FilesImporter implements DataImporter
             throw new IllegalArgumentException("No configuration files found in target directory: " + targetPath);
         }
 
-        // fore each target, merge in root if exists
-        var rootFilesMap = new HashMap<String, Map<String, Object>>();
-        for (var rootFile : rootFiles) {
-            rootFilesMap.put(rootFile.getName(), readFile(rootFile));
-        }
-
-        for (var targetFile : targetFiles) {
-            var target = readFile(targetFile);
-            var root = rootFilesMap.get(targetFile.getName());
-            if (root != null) {
-                mergeMaps(root, target);
-            } else {
-                rootFilesMap.put(targetFile.getName(), target);
+        try {
+            // fore each target, merge in root if exists
+            var rootFilesMap = new HashMap<String, Map<String, Object>>();
+            for (var rootFile : rootFiles) {
+                rootFilesMap.put(rootFile.getName(), readFile(rootFile));
             }
-        }
 
-        var result = new HashMap<String, String>();
-        for (final var entry : rootFilesMap.entrySet()) {
-            var name = FilenameUtils.removeExtension(entry.getKey());
-            result.put(name, writeValueAsString(entry.getValue()));
-        }
+            for (var targetFile : targetFiles) {
+                var target = readFile(targetFile);
+                var root = rootFilesMap.get(targetFile.getName());
+                if (root != null) {
+                    mergeMaps(root, target);
+                } else {
+                    rootFilesMap.put(targetFile.getName(), target);
+                }
+            }
 
-        return result;
+            var result = new HashMap<String, String>();
+            for (final var entry : rootFilesMap.entrySet()) {
+                var name = FilenameUtils.removeExtension(entry.getKey());
+                result.put(name, writeValueAsString(entry.getValue()));
+            }
+
+            return result;
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to process the configurations to import. Please check the error logs", e);
+        }
     }
 
     private boolean filterFile(@NonNull final File file) {
         if (file.isDirectory()) {
             return false;
         }
-        final var extension = FilenameUtils.getExtension(file.getName().toLowerCase());
+        final var extension = FilenameUtils.getExtension(file.getName());
         return isExtensionAccepted(extension);
     }
 
@@ -84,10 +88,11 @@ abstract sealed class FilesImporter implements DataImporter
     @NonNull
     protected abstract Map<String, Object> readFile(@NonNull final File file) throws IOException;
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private void mergeMaps(@NonNull final Map<String, Object> root, final Map<String, Object> target) {
         target.forEach((key, value) -> root.merge(key, value, (rootKid, targetKid) -> {
-            if (rootKid instanceof Map) {
-                mergeMaps((Map) rootKid, (Map) targetKid);
+            if (rootKid instanceof Map matRootKid) {
+                mergeMaps(matRootKid, (Map) targetKid);
                 return rootKid;
             } else {
                 return rootKid.getClass().cast(targetKid);

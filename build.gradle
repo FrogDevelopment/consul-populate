@@ -28,6 +28,13 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
     testImplementation("org.mockito:mockito-junit-jupiter:5.11.0")
     testImplementation("org.assertj:assertj-core:3.25.3")
+    testImplementation("org.jetbrains:annotations:24.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+
+    testImplementation(platform("org.testcontainers:testcontainers-bom:1.19.7"))
+    testImplementation("org.testcontainers:testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:consul")
 }
 
 
