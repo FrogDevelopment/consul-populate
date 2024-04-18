@@ -21,12 +21,13 @@ import io.vertx.ext.consul.TxnRequest;
 @Slf4j
 @Singleton
 @RequiredArgsConstructor
-public class PopulateServiceImpl {
+class PopulateServiceImpl implements PopulateService {
 
     private final ConsulClient consulClient;
     private final ConsulGlobalProperties consulGlobalProperties;
     private final DataImporter dataImporter;
 
+    @Override
     public void populate() {
         try {
             toBlocking(consulClient.leaderStatus());

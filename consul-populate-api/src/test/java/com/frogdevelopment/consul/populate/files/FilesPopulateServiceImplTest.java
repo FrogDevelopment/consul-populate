@@ -12,7 +12,7 @@ import org.testcontainers.consul.ConsulContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.frogdevelopment.consul.populate.PopulateServiceImpl;
+import com.frogdevelopment.consul.populate.PopulateService;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.NonNull;
@@ -29,7 +29,7 @@ class FilesPopulateServiceImplTest extends BaseFilesImporterTest {
     public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.18.1");
 
     @Inject
-    private PopulateServiceImpl populateService;
+    private PopulateService populateService;
 
     @Inject
     private ConsulClient consulClient;

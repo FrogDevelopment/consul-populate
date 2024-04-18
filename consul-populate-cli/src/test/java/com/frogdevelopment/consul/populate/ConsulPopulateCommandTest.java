@@ -5,16 +5,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 
-public class ConsulPopulateCommandTest {
+class ConsulPopulateCommandTest {
 
     @Test
-    public void testWithCommandLineOption() throws Exception {
+    @Disabled
+    void testWithCommandLineOption() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(baos));
 

@@ -1,0 +1,18 @@
+[versions]
+commons-io = "2.16.1"
+jetbrains = "24.1.0"
+testcontainers = "1.19.7"
+vertx = "4.5.7"
+
+plugin-jib = "3.4.2"
+
+[libraries]
+commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains" }
+testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainers-consul = { module = "org.testcontainers:consul", version.ref = "testcontainers" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+vertx-consul = { module = "io.vertx:vertx-consul-client", version.ref = "vertx" }
+
+[plugins]
+jib = { id = "com.google.cloud.tools.jib", version.ref = "plugin-jib" }
