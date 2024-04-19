@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+
+jobs:
+  tagging:
+    name: Release of [${{ github.event.inputs.version }}]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: release/${{ github.event.inputs.version }}
+          fetch-depth: 0
+
+      - name: Config Git
+        run: |
+          git config user.name ${{ github.actor }}
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Merge on master
+        run: |
+          git checkout master
+          git merge --no-ff release/${{ github.event.inputs.version }}
+          git push
+
+      - name: Tag on master
+        run: |
+          git tag --annotate --message 'Release ${{ github.event.inputs.version }}' ${{ github.event.inputs.version }}
+          git push origin ${{ github.event.inputs.version }}
+
+      - name: Merge on develop
+        run: |
+          git checkout develop
+          git merge --no-ff release/${{ github.event.inputs.version }}
+          git push
+
+      - name: Delete released branch
+        run: git push origin :release/${{ github.event.inputs.version }}
