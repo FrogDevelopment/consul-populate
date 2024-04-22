@@ -8,7 +8,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 
 @Data
 @ConfigurationProperties("consul")
-public class ConsulGlobalProperties {
+public class GlobalProperties {
 
     /**
      * Consul host. Defaults to {@code localhost}
@@ -21,7 +21,7 @@ public class ConsulGlobalProperties {
     /**
      * Set whether Consul is secured. Defaults to {@code false}
      */
-    private boolean isSecured = false;
+    private boolean secured = false;
     /**
      * ACL token needed to read and write in KV path. When present, will be added to requests using `?token` query parameter
      */
@@ -39,22 +39,22 @@ public class ConsulGlobalProperties {
      */
     private String configPathPrefix = "config";
     /**
-     * Version of the current configuration. Will be used to generate the `configPath`
+     * Version of the current configuration. When present, will be used to generate the `configPath`
      */
-    private String version;
+    private Optional<String> configVersion;
     /**
      * Type of data used to be export into Consul
      */
     private Type type;
 
     /**
-     * @return Full config path by concatenating {@code configPathPrefix} & {@code version}
+     * @return Full config path by concatenating {@code configPathPrefix} & {@code configVersion} if present
      */
     public String getConfigPath() {
         if (configPathPrefix.endsWith("/")) {
-            return configPathPrefix + version;
+            return configPathPrefix + configVersion.orElse("");
         } else {
-            return configPathPrefix + '/' + version;
+            return configPathPrefix + '/' + configVersion.orElse("");
         }
     }
 

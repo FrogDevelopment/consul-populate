@@ -20,8 +20,8 @@ public final class YamlFilesImporter extends FilesImporter {
 
     private final Yaml yaml = new Yaml();
 
-    public YamlFilesImporter(final ConsulFileProperties fileProperties) {
-        super(fileProperties);
+    public YamlFilesImporter(final ImportFileProperties importProperties) {
+        super(importProperties);
     }
 
     @Override

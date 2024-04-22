@@ -19,17 +19,17 @@ import io.micronaut.core.util.ArrayUtils;
 abstract sealed class FilesImporter implements DataImporter
         permits JsonFilesImporter, PropertiesFilesImporter, YamlFilesImporter {
 
-    private final ConsulFileProperties fileProperties;
+    private final ImportFileProperties importProperties;
 
     @NonNull
     @Override
     public Map<String, String> execute() {
         // validate paths
-        final var rootPath = Paths.get(fileProperties.getRootPath());
+        final var rootPath = Paths.get(importProperties.getRootPath());
         if (!rootPath.toFile().exists()) {
             throw new IllegalArgumentException("Root directory does not exist: " + rootPath);
         }
-        final var targetPath = rootPath.resolve(fileProperties.getTarget());
+        final var targetPath = rootPath.resolve(importProperties.getTarget());
         if (!targetPath.toFile().exists()) {
             throw new IllegalArgumentException("Target directory does not exist: " + targetPath);
         }

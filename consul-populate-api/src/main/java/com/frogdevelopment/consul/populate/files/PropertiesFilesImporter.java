@@ -18,8 +18,8 @@ public final class PropertiesFilesImporter extends FilesImporter {
 
     private static final List<String> EXTENSIONS = List.of("properties");
 
-    public PropertiesFilesImporter(final ConsulFileProperties fileProperties) {
-        super(fileProperties);
+    public PropertiesFilesImporter(final ImportFileProperties importProperties) {
+        super(importProperties);
     }
 
     @Override

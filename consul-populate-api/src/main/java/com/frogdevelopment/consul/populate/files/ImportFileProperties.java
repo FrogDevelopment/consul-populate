@@ -2,11 +2,13 @@ package com.frogdevelopment.consul.populate.files;
 
 import lombok.Data;
 
+import com.frogdevelopment.consul.populate.config.ImportProperties;
+
 import io.micronaut.context.annotation.ConfigurationProperties;
 
 @Data
 @ConfigurationProperties("consul.files")
-public class ConsulFileProperties {
+public final class ImportFileProperties implements ImportProperties {
 
     /**
      * Path to root directory

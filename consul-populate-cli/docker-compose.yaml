@@ -1,0 +1,40 @@
+services:
+
+  consul:
+    image: registry-jpe2.r-local.net/dockerhub/hashicorp/consul:1.11.2
+    container_name: consul-server
+    hostname: consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    command: "agent -bootstrap"
+    volumes:
+      - ./consul/server.json:/consul/config/server.json:ro
+      - consul_data:/consul/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100k"
+        max-file: "1"
+
+  consul-populate:
+    image: frogdevelopment/consul-populate:1.0.0-SNAPSHOT
+    environment:
+      CONSUL_HOST: consul
+      CONSUL_PORT: 8500
+      CONSUL_CONFIG_VERSION: frog
+      CONSUL_TYPE: FILES
+      CONSUL_FILES_FORMAT: YAML
+      CONSUL_FILES_TARGET: local
+      CONSUL_FILES_ROOT_PATH: /configurations
+    volumes:
+      - ./src/test/resources/files:/configurations:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100k"
+        max-file: "1"
+
+volumes:
+  consul_data:

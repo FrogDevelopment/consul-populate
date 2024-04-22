@@ -18,7 +18,7 @@ public class ConsulFactory {
 
     @Context
     @Bean(preDestroy = "close")
-    ConsulClient consulClient(final Vertx vertx, final ConsulGlobalProperties properties) {
+    ConsulClient consulClient(final Vertx vertx, final GlobalProperties properties) {
         final var consulClientOptions = new ConsulClientOptions()
                 .setHost(properties.getHost())
                 .setPort(properties.getPort())

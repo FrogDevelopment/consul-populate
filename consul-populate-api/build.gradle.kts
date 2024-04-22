@@ -27,7 +27,6 @@ dependencies {
     testImplementation(mn.assertj.core)
     testImplementation(mn.junit.jupiter.params)
     testImplementation(mn.mockito.junit.jupiter)
-
     testImplementation(libs.testcontainers.core)
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.consul)

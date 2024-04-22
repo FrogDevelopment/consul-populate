@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import jakarta.inject.Singleton;
 
-import com.frogdevelopment.consul.populate.config.ConsulGlobalProperties;
+import com.frogdevelopment.consul.populate.config.GlobalProperties;
 
 import io.vertx.ext.consul.ConsulClient;
 import io.vertx.ext.consul.TxnKVOperation;
@@ -24,7 +24,7 @@ import io.vertx.ext.consul.TxnRequest;
 class PopulateServiceImpl implements PopulateService {
 
     private final ConsulClient consulClient;
-    private final ConsulGlobalProperties consulGlobalProperties;
+    private final GlobalProperties globalProperties;
     private final DataImporter dataImporter;
 
     @Override
@@ -35,7 +35,7 @@ class PopulateServiceImpl implements PopulateService {
             throw new IllegalStateException("Consul is not reachable/ready to be populate. Please check error logs", e);
         }
 
-        final var configPath = consulGlobalProperties.getConfigPath();
+        final var configPath = globalProperties.getConfigPath();
 
         // Importing data from configured type
         var configsToImport = dataImporter.execute()

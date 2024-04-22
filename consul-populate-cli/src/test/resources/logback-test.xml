@@ -1,4 +1,4 @@
-<configuration>
+<configuration debug="false">
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <!-- encoders are assigned the type
@@ -8,6 +8,8 @@
             </pattern>
         </encoder>
     </appender>
+
+    <logger name="org.testcontainers" level="WARN"/>
 
     <root level="info">
         <appender-ref ref="STDOUT"/>
