@@ -14,6 +14,7 @@ import jakarta.inject.Singleton;
 import com.frogdevelopment.consul.populate.config.GlobalProperties;
 
 import io.vertx.ext.consul.ConsulClient;
+import io.vertx.ext.consul.TxnError;
 import io.vertx.ext.consul.TxnKVOperation;
 import io.vertx.ext.consul.TxnKVVerb;
 import io.vertx.ext.consul.TxnRequest;
@@ -37,6 +38,7 @@ class PopulateServiceImpl implements PopulateService {
 
         final var configPath = globalProperties.getConfigPath();
 
+        log.info("Retrieving data to export");
         // Importing data from configured type
         var configsToImport = dataImporter.execute()
                 .entrySet()
@@ -58,16 +60,17 @@ class PopulateServiceImpl implements PopulateService {
                 .map(toDeleteOperation())
                 .forEach(txnRequest::addOperation);
 
+        log.info("Exporting data to consul");
         var result = toBlocking(consulClient.transaction(txnRequest));
         log.info("succeeded results size: {}", result.getResultsSize());
-        log.info("errors size: {}", result.getErrorsSize());
         if (result.getErrorsSize() > 0) {
-            result.getErrors().forEach(txnError -> log.error("error: {}", txnError.getWhat()));
-        }
-
-        if (result.getResultsSize() + result.getErrorsSize() != txnRequest.getOperationsSize()) {
-            log.warn("Some operations where not executed");
-            // todo handle this case
+            log.error("Some operations ({}) lead to error:{}",
+                    result.getErrorsSize(),
+                    result.getErrors()
+                            .stream()
+                            .map(TxnError::getWhat)
+                            .collect(Collectors.joining("\n\t- "))
+            );
         }
     }
 

@@ -1,16 +1,13 @@
 services:
 
   consul:
-    image: registry-jpe2.r-local.net/dockerhub/hashicorp/consul:1.11.2
-    container_name: consul-server
+    image: hashicorp/consul:1.18.1
     hostname: consul
     ports:
       - "8500:8500"
       - "8600:8600/tcp"
       - "8600:8600/udp"
-    command: "agent -bootstrap"
     volumes:
-      - ./consul/server.json:/consul/config/server.json:ro
       - consul_data:/consul/data
     logging:
       driver: "json-file"
@@ -26,7 +23,7 @@ services:
       CONSUL_CONFIG_VERSION: frog
       CONSUL_TYPE: FILES
       CONSUL_FILES_FORMAT: YAML
-      CONSUL_FILES_TARGET: local
+      CONSUL_FILES_TARGET: dev
       CONSUL_FILES_ROOT_PATH: /configurations
     volumes:
       - ./src/test/resources/files:/configurations:ro
