@@ -1,3 +1,4 @@
+![Build](https://github.com/FrogDevelopment/consul-populate/actions/workflows/ci_cd.yml/badge.svg)
 ## Consul Populate (WIP)
 
 Concept: give a tool to easily push content in Consul KV to be used as distributed configurations
@@ -34,7 +35,7 @@ Parameters:
 Using consul-populate-cli
 
 ```shell
-
+fixme
 ```
 
 ### Directories structure
