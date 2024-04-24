@@ -11,9 +11,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import jakarta.inject.Singleton;
 
-import com.frogdevelopment.consul.populate.config.ConsulGlobalProperties;
+import com.frogdevelopment.consul.populate.config.GlobalProperties;
 
 import io.vertx.ext.consul.ConsulClient;
+import io.vertx.ext.consul.TxnError;
 import io.vertx.ext.consul.TxnKVOperation;
 import io.vertx.ext.consul.TxnKVVerb;
 import io.vertx.ext.consul.TxnRequest;
@@ -24,7 +25,7 @@ import io.vertx.ext.consul.TxnRequest;
 class PopulateServiceImpl implements PopulateService {
 
     private final ConsulClient consulClient;
-    private final ConsulGlobalProperties consulGlobalProperties;
+    private final GlobalProperties globalProperties;
     private final DataImporter dataImporter;
 
     @Override
@@ -35,12 +36,13 @@ class PopulateServiceImpl implements PopulateService {
             throw new IllegalStateException("Consul is not reachable/ready to be populate. Please check error logs", e);
         }
 
-        final var configPath = consulGlobalProperties.getConfigPath();
+        final var kvPath = globalProperties.getKv().getPath();
 
+        log.info("Retrieving data to export");
         // Importing data from configured type
         var configsToImport = dataImporter.execute()
                 .entrySet()
-                .stream().collect(Collectors.toMap(entry -> configPath + '/' + entry.getKey(), Map.Entry::getValue));
+                .stream().collect(Collectors.toMap(entry -> kvPath + '/' + entry.getKey(), Map.Entry::getValue));
 
         // Create/Update/Delete config
         final var txnRequest = new TxnRequest();
@@ -50,7 +52,7 @@ class PopulateServiceImpl implements PopulateService {
                 .forEach(txnRequest::addOperation);
 
         // retrieve current configs in Consul KV
-        var existingKeysInConsul = toBlocking(consulClient.getKeys(configPath));
+        var existingKeysInConsul = toBlocking(consulClient.getKeys(kvPath));
 
         // keep only those that are to be deleted (no present anymore in the data pushed)
         existingKeysInConsul.stream()
@@ -58,16 +60,17 @@ class PopulateServiceImpl implements PopulateService {
                 .map(toDeleteOperation())
                 .forEach(txnRequest::addOperation);
 
+        log.info("Exporting data to consul");
         var result = toBlocking(consulClient.transaction(txnRequest));
         log.info("succeeded results size: {}", result.getResultsSize());
-        log.info("errors size: {}", result.getErrorsSize());
         if (result.getErrorsSize() > 0) {
-            result.getErrors().forEach(txnError -> log.error("error: {}", txnError.getWhat()));
-        }
-
-        if (result.getResultsSize() + result.getErrorsSize() != txnRequest.getOperationsSize()) {
-            log.warn("Some operations where not executed");
-            // todo handle this case
+            log.error("Some operations ({}) lead to error:{}",
+                    result.getErrorsSize(),
+                    result.getErrors()
+                            .stream()
+                            .map(TxnError::getWhat)
+                            .collect(Collectors.joining("\n\t- "))
+            );
         }
     }
 

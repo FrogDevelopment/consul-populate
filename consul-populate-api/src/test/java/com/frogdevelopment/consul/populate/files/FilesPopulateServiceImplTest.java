@@ -16,12 +16,10 @@ import com.frogdevelopment.consul.populate.PopulateService;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.vertx.ext.consul.ConsulClient;
 
 @Testcontainers
-@MicronautTest(startApplication = false)
-@Property(name = "consul.version", value = "test")
+@Property(name = "consul.kv.version", value = "test")
 @Property(name = "consul.files.format", value = "YAML")
 class FilesPopulateServiceImplTest extends BaseFilesImporterTest {
 

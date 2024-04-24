@@ -24,6 +24,15 @@ dependencies {
 
     runtimeOnly(mn.logback.classic)
     runtimeOnly(mn.snakeyaml)
+
+    testImplementation(mn.assertj.core)
+    testImplementation(mn.mockito.junit.jupiter)
+    testImplementation(libs.testcontainers.core)
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.consul)
+    testImplementation(libs.vertx.consul)
+    testImplementation(libs.systemlambda)
+
 }
 
 application {
@@ -31,6 +40,23 @@ application {
 }
 
 tasks {
+    test {
+        // https://github.com/stefanbirkner/system-lambda/issues/27
+        systemProperty("java.security.manager", "allow")
+
+        // #https://junit-pioneer.org/docs/environment-variables/#warnings-for-reflective-access
+//        jvmArgs = listOf("--add-opens java.base/java.util=ALL-UNNAMED","--add-opens java.base/java.lang=ALL-UNNAMED")
+
+//        environment.put("CONSUL_HOST", "qwert")
+//        environment.put("CONSUL_PORT", 12345)
+//        environment.put("CONSUL_SECURED", true)
+//        environment.put("CONSUL_CONFIG_VERSION", "toto")
+//        environment.put("CONSUL_TYPE", "FILES")
+//        environment.put("CONSUL_FILES_FORMAT", "YAML")
+//        environment.put("CONSUL_FILES_TARGET", "stg")
+//        environment.put("CONSUL_FILES_ROOT_PATH", "somewhere")
+    }
+
     jib {
 
         from {
@@ -38,7 +64,7 @@ tasks {
         }
 
         to {
-            image = "frogdevelopment/consul-populate:latest"
+            image = "frogdevelopment/consul-populate:${rootProject.version}"
         }
 
         container {

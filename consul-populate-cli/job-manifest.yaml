@@ -5,10 +5,19 @@ metadata:
 spec:
   template:
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: consul-populate
-          image: xxxxxxx
-          command: [ "","","" ]
+          image: frogdevelopment/consul-populate:1.0.0-SNAPSHOT
+          args:
+            #            - "consul.host=localhost"
+            #            - "consul.port=8500"
+            - "consul.acl-token={{CONSUL_ACL_TOKEN}}"
+            - "consul.config-version={{CONSUL_CONFIG_VERSION}}"
+            - "consul.type=FILES"
+            - "consul.files.format=YAML"
+            - "consul.files.target=stg"
+            - "consul.files.root-path=XXX"
           imagePullPolicy: Always
       restartPolicy: Never
   backoffLimit: 3

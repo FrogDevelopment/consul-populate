@@ -23,8 +23,8 @@ public final class JsonFilesImporter extends FilesImporter {
 
     private final ObjectMapper objectMapper;
 
-    public JsonFilesImporter(final ConsulFileProperties fileProperties, ObjectMapper objectMapper) {
-        super(fileProperties);
+    public JsonFilesImporter(final ImportFileProperties importProperties, ObjectMapper objectMapper) {
+        super(importProperties);
         this.objectMapper = objectMapper;
     }
 
