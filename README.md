@@ -4,18 +4,16 @@ Concept: give a tool to easily push content in Consul KV to be used as distribut
 
 ## Configuration
 
-- `consul.host`: Consul host. Defaults to *localhost* (Required)
-- `consul.port`: Consul port. Defaults to *8500* (Required)
-- `consul.is_secured`: Set whether Consul is secured. Defaults to *false* (Optional)
-- `consul.acl_token`: ACL token needed to read and write in KV path. When present, will be added to requests
+- `consul.host`: Consul host. Defaults to *localhost* (**Required**)
+- `consul.port`: Consul port. Defaults to *8500* (**Required**)
+- `consul.secured`: Set whether Consul is secured. Defaults to *false* (Optional)
+- `consul.acl-token`: ACL token needed to read and write in KV path. When present, will be added to requests
   using `?token` query parameter (Optional)
 - `consul.dc`: Consul datacenter name. When present, will be added to requests using `?dc` query parameter (Optional)
 - `consul.timeout`: Amount of time (in milliseconds) for requests (Optional)
-- `consul.config_path_prefix`: The path where the configuration is stores. Will be used to generate the `configPath`.
-  Defaults to *config* (Optional)
-- `consul.configVersion`: Version of the current configuration. When present, will be used to generate
-  the `configPath` (Optional)
-- `consul.type`: (FILES | GIT) Type of data used to be export into Consul (Required)
+- `consul.type`: (FILES | GIT) Type of data used to be export into Consul (**Required**)
+- `consul.kv.prefix`: Prefix for the KV path where the configuration is stored. Defaults to *config* (**Required**)
+- `consul.kv.version`: Version of the configuration. When present, will be used in the KV path (Optional)
 
 ### About the KV name format
 
@@ -27,9 +25,9 @@ Note that the format of the KV in case of profile/environment is `{file_name},{p
 
 Parameters:
 
-- `consul.files.rootPath`: path to root directory
-- `consul.files.target`: subdirectory used to override root configurations
-- `consul.files.format`: (YAML | JSON | PROPERTIES) Supported format of the files
+- `consul.files.root-path`: path to root directory (**Required**)
+- `consul.files.target`: subdirectory used to override root configurations (**Required**)
+- `consul.files.format`: (YAML | JSON | PROPERTIES) Supported format of the files (**Required**)
 
 ### Usage
 

@@ -13,11 +13,13 @@ micronaut {
 
 dependencies {
     annotationProcessor(mn.lombok)
+    annotationProcessor(mn.micronaut.validation.processor)
 
     implementation(mn.micronaut.jackson.databind)
+    implementation(mn.micronaut.validation.asProvider())
     implementation(libs.vertx.consul)
-    implementation(mn.snakeyaml)
     implementation(libs.commons.io)
+    implementation(mn.snakeyaml)
 
     compileOnly(mn.lombok)
 

@@ -36,13 +36,13 @@ class PopulateServiceImpl implements PopulateService {
             throw new IllegalStateException("Consul is not reachable/ready to be populate. Please check error logs", e);
         }
 
-        final var configPath = globalProperties.getConfigPath();
+        final var kvPath = globalProperties.getKv().getPath();
 
         log.info("Retrieving data to export");
         // Importing data from configured type
         var configsToImport = dataImporter.execute()
                 .entrySet()
-                .stream().collect(Collectors.toMap(entry -> configPath + '/' + entry.getKey(), Map.Entry::getValue));
+                .stream().collect(Collectors.toMap(entry -> kvPath + '/' + entry.getKey(), Map.Entry::getValue));
 
         // Create/Update/Delete config
         final var txnRequest = new TxnRequest();
@@ -52,7 +52,7 @@ class PopulateServiceImpl implements PopulateService {
                 .forEach(txnRequest::addOperation);
 
         // retrieve current configs in Consul KV
-        var existingKeysInConsul = toBlocking(consulClient.getKeys(configPath));
+        var existingKeysInConsul = toBlocking(consulClient.getKeys(kvPath));
 
         // keep only those that are to be deleted (no present anymore in the data pushed)
         existingKeysInConsul.stream()

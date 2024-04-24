@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.vertx.ext.consul.ConsulClient;
 
 @Testcontainers
-@Property(name = "consul.config-version", value = "test")
+@Property(name = "consul.kv.version", value = "test")
 @Property(name = "consul.files.format", value = "YAML")
 class FilesPopulateServiceImplTest extends BaseFilesImporterTest {
 
