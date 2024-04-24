@@ -23,6 +23,6 @@ abstract class BaseFilesImporterTest implements TestPropertyProvider {
         return Map.of(
                 "consul.type", "FILES",
                 "consul.files.target", "test",
-                "consul.files.rootPath", rootPath);
+                "consul.files.root-path", rootPath);
     }
 }

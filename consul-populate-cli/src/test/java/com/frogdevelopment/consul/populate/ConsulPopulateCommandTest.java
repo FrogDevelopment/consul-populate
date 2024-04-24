@@ -51,8 +51,8 @@ class ConsulPopulateCommandTest {
         var properties = new HashMap<String, String>();
         properties.put("consul.host", consulHost);
         properties.put("consul.port", consulPort);
-        properties.put("consul.config-version", "1.2.3");
         properties.put("consul.type", "FILES");
+        properties.put("consul.kv.version", "1.2.3");
         properties.put("consul.files.format", "YAML");
         properties.put("consul.files.target", "prod");
         properties.put("consul.files.root-path", getRootPath());
@@ -81,8 +81,8 @@ class ConsulPopulateCommandTest {
         // given
         withEnvironmentVariable("CONSUL_HOST", consulHost)
                 .and("CONSUL_PORT", consulPort)
-                .and("CONSUL_CONFIG_VERSION", "1.2.3")
                 .and("CONSUL_TYPE", "FILES")
+                .and("CONSUL_KV_VERSION", "1.2.3")
                 .and("CONSUL_FILES_FORMAT", "YAML")
                 .and("CONSUL_FILES_TARGET", "prod")
                 .and("CONSUL_FILES_ROOT_PATH", getRootPath())
