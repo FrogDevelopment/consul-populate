@@ -17,6 +17,17 @@ class JsonFilesImporterTest extends BaseFilesImporterTest {
     @Language("JSON")
     private static final String EXPECTED = """
             {
+              "collections" : {
+                "items" : [ "item_C" ]
+              },
+              "foo" : {
+                "bar" : "new_value",
+                "baz" : "to_keep"
+              },
+              "simple-value" : "kept",
+              "something" : {
+                "new" : true
+              },
               "very" : {
                 "deep" : {
                   "nested" : {
@@ -34,17 +45,6 @@ class JsonFilesImporterTest extends BaseFilesImporterTest {
                     }
                   }
                 }
-              },
-              "foo" : {
-                "bar" : "new_value",
-                "baz" : "to_keep"
-              },
-              "collections" : {
-                "items" : [ "item_C" ]
-              },
-              "simple-value" : "kept",
-              "something" : {
-                "new" : true
               }
             }""";
 

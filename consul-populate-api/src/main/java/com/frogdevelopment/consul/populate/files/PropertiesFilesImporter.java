@@ -11,6 +11,7 @@ import jakarta.inject.Singleton;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 
 @Singleton
 @Requires(property = "consul.files.format", value = "PROPERTIES")
@@ -27,7 +28,7 @@ public final class PropertiesFilesImporter extends FilesImporter {
         return EXTENSIONS.contains(extension.toLowerCase());
     }
 
-    @NonNull
+    @Nullable
     @Override
     protected Map<String, Object> readFile(@NonNull final File file) throws IOException {
         try (var reader = Files.newBufferedReader(file.toPath())) {

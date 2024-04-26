@@ -7,18 +7,23 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.frogdevelopment.consul.populate.DataImporter;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArrayUtils;
 
 @RequiredArgsConstructor
 abstract sealed class FilesImporter implements DataImporter
         permits JsonFilesImporter, PropertiesFilesImporter, YamlFilesImporter {
 
+    private static final Logger log = LoggerFactory.getLogger(FilesImporter.class);
     private final ImportFileProperties importProperties;
 
     @NonNull
@@ -54,7 +59,12 @@ abstract sealed class FilesImporter implements DataImporter
             }
 
             for (var targetFile : targetFiles) {
+                log.debug("Merging file: {}", targetFile.getAbsolutePath());
                 var target = readFile(targetFile);
+                if (target == null) {
+                    log.warn("Content is null for file: {}", targetFile.getAbsolutePath());
+                    continue;
+                }
                 var root = rootFilesMap.get(targetFile.getName());
                 if (root != null) {
                     mergeMaps(root, target);
@@ -66,7 +76,8 @@ abstract sealed class FilesImporter implements DataImporter
             var result = new HashMap<String, String>();
             for (final var entry : rootFilesMap.entrySet()) {
                 var name = FilenameUtils.removeExtension(entry.getKey());
-                result.put(name, writeValueAsString(entry.getValue()));
+                var sortedMap = new TreeMap<>(entry.getValue());
+                result.put(name, writeValueAsString(sortedMap));
             }
 
             return result;
@@ -85,7 +96,7 @@ abstract sealed class FilesImporter implements DataImporter
 
     protected abstract boolean isExtensionAccepted(@NonNull final String extension);
 
-    @NonNull
+    @Nullable
     protected abstract Map<String, Object> readFile(@NonNull final File file) throws IOException;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
