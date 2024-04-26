@@ -1,5 +1,5 @@
 plugins {
-    id("io.micronaut.minimal.application") version "4.3.6"
+    id("io.micronaut.minimal.application") version "4.3.7"
     alias(libs.plugins.jib)
 }
 
