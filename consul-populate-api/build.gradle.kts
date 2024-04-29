@@ -1,5 +1,5 @@
 plugins {
-    id("io.micronaut.minimal.library") version "4.3.6"
+    id("io.micronaut.minimal.library") version "4.3.8"
 }
 
 micronaut {
