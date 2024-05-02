@@ -21,7 +21,6 @@ abstract class BaseFilesImporterTest implements TestPropertyProvider {
                 .map(url -> Path.of(url.getPath()).getParent().toString())
                 .orElseThrow();
         return Map.of(
-                "consul.type", "FILES",
                 "consul.files.target", "test",
                 "consul.files.root-path", rootPath);
     }

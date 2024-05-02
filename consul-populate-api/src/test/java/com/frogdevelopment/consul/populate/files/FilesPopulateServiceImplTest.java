@@ -12,6 +12,7 @@ import org.testcontainers.consul.ConsulContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.frogdevelopment.consul.populate.DataImporter;
 import com.frogdevelopment.consul.populate.PopulateService;
 
 import io.micronaut.context.annotation.Property;
@@ -31,6 +32,9 @@ class FilesPopulateServiceImplTest extends BaseFilesImporterTest {
 
     @Inject
     private ConsulClient consulClient;
+
+    @Inject
+    private DataImporter dataImporter;
 
     @Override
     public @NonNull Map<String, String> getProperties() {
@@ -52,6 +56,7 @@ class FilesPopulateServiceImplTest extends BaseFilesImporterTest {
         populateService.populate();
 
         // then
+        assertThat(dataImporter).isInstanceOf(FilesImporter.class);
         keys = toBlocking(consulClient.getKeys("config"));
         assertThat(keys).hasSize(1);
         final var key = keys.getFirst();

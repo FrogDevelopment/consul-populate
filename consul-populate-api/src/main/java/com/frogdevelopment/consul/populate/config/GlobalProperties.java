@@ -47,18 +47,8 @@ public class GlobalProperties {
      */
     private OptionalLong timeout = OptionalLong.empty();
 
-    /**
-     * Type of data used to be export into Consul
-     */
-    @NotNull
-    private Type type;
-
     @NotNull
     private KV kv = new KV();
-
-    enum Type {
-        FILES, GIT
-    }
 
     @Data
     @ConfigurationProperties("kv")

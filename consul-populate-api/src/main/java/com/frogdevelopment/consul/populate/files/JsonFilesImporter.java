@@ -38,8 +38,7 @@ public final class JsonFilesImporter extends FilesImporter {
     @Override
     protected Map<String, Object> readFile(@NonNull final File file) throws IOException {
         try (var reader = Files.newBufferedReader(file.toPath())) {
-            final var typeRef
-                    = new TypeReference<LinkedHashMap<String, Object>>() {
+            final var typeRef = new TypeReference<LinkedHashMap<String, Object>>() {
             };
             return objectMapper.readValue(reader, typeRef);
         }

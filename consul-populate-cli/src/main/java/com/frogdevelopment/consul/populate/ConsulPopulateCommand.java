@@ -23,8 +23,6 @@ public class ConsulPopulateCommand implements Runnable {
     String consulHost;
     @Option(names = {"--consul.port"}, defaultValue = "8500")
     int consulPort;
-    @Option(names = {"--consul.type"})
-    String consulType;
     @Option(names = {"--consul.kv.prefix"})
     String consulKvPrefix;
     @Option(names = {"--consul.kv.version"})
