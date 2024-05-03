@@ -1,5 +1,5 @@
 plugins {
-    id("io.micronaut.minimal.application") version "4.3.6"
+    id("io.micronaut.minimal.application") version "4.3.8"
     alias(libs.plugins.jib)
 }
 
@@ -60,7 +60,17 @@ tasks {
     jib {
 
         from {
-            image = "eclipse-temurin:21-jre-jammy"
+            image = "eclipse-temurin:21-jre-alpine"
+            platforms {
+                platform {
+                    architecture = "amd64"
+                    os = "linux"
+                }
+                platform {
+                    architecture = "arm64"
+                    os = "linux"
+                }
+            }
         }
 
         to {
