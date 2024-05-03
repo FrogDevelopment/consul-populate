@@ -1,0 +1,120 @@
+# Note: to test using Minikube, read https://minikube.sigs.k8s.io/docs/start/
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: consul-populate
+  labels:
+    name: consul-populate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    tools: consul
+  name: consul
+  namespace: consul-populate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consul
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: consul
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - env:
+            - name: CONSUL_DISABLE_PERM_MGMT
+              value: "true"
+          image: registry-jpe2.r-local.net/dockerhub/hashicorp/consul:1.18.1
+          imagePullPolicy: IfNotPresent
+          name: consul
+          ports:
+            - containerPort: 8500
+              protocol: TCP
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul-svc
+  namespace: consul-populate
+spec:
+  ports:
+    - name: tcp-consul-port
+      port: 8500
+      protocol: TCP
+      targetPort: 8500
+  selector:
+    app: consul
+  sessionAffinity: None
+  type: ClusterIP
+# Note: to access locally UI use
+# - kubectl expose deployment consul --type=NodePort --port=8500
+# - minikube service consul -n consul-populate
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: configurations-pv
+  namespace: consul-populate
+spec:
+  accessModes:
+    - ReadOnlyMany
+  hostPath:
+    # mounting filesystems into Minikube using `minikube mount ./src/test/resources/files:/consul-populate/test/`
+    # read https://minikube.sigs.k8s.io/docs/handbook/mount/ for more details
+    path: /consul-populate/test/
+  capacity:
+    storage: 1Gi
+  persistentVolumeReclaimPolicy: Delete
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: configurations-pvc
+  namespace: consul-populate
+spec:
+  storageClassName: ""
+  volumeName: configurations-pv
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: consul-populate
+  namespace: consul-populate
+spec:
+  template:
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: consul-populate
+          image: frogdevelopment/consul-populate:1.0.0-SNAPSHOT
+          args:
+            - "--consul.host=consul-svc"
+            - "--consul.port=8500"
+            - "--consul.kv.prefix=frog"
+            - "--consul.kv.version=1.2.3"
+            - "--consul.files.format=YAML"
+            - "--consul.files.target=dev"
+            - "--consul.files.root-path=/configurations"
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: /configurations
+              name: configurations
+      restartPolicy: Never
+      volumes:
+        - name: configurations
+          persistentVolumeClaim:
+            claimName: configurations-pvc
+            readOnly: true
+  backoffLimit: 3
