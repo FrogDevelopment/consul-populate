@@ -46,11 +46,44 @@ class ConsulPopulateCommandTest {
     }
 
     @Test
+    void should_dryRun() throws Exception {
+        // given
+        var properties = new HashMap<String, String>();
+        properties.put("consul.host", consulHost);
+        properties.put("consul.port", consulPort);
+        properties.put("consul.kv.prefix", "frog");
+        properties.put("consul.kv.version", "1.2.3");
+        properties.put("consul.files.format", "YAML");
+        properties.put("consul.files.target", "prod");
+        properties.put("consul.files.root-path", getRootPath());
+        properties.put("dry-run", "true");
+
+        String[] args = properties.entrySet()
+                .stream()
+                .map(entry -> {
+                    String key = entry.getKey();
+                    var value = entry.getValue();
+                    return "--" + key + "=" + value;
+                })
+                .toArray(String[]::new);
+
+        // when
+        int statusCode = catchSystemExit(() -> ConsulPopulateCommand.main(args));
+
+        // then
+        assertThat(statusCode).isEqualTo(OK);
+
+        var keys = toBlocking(consulClient.getKeys(""));
+        assertThat(keys).isEmpty();
+    }
+
+    @Test
     void should_use_arguments() throws Exception {
         // given
         var properties = new HashMap<String, String>();
         properties.put("consul.host", consulHost);
         properties.put("consul.port", consulPort);
+        properties.put("consul.kv.prefix", "frog");
         properties.put("consul.kv.version", "1.2.3");
         properties.put("consul.files.format", "YAML");
         properties.put("consul.files.target", "prod");
@@ -80,6 +113,7 @@ class ConsulPopulateCommandTest {
         // given
         withEnvironmentVariable("CONSUL_HOST", consulHost)
                 .and("CONSUL_PORT", consulPort)
+                .and("CONSUL_KV_PREFIX", "frog")
                 .and("CONSUL_KV_VERSION", "1.2.3")
                 .and("CONSUL_FILES_FORMAT", "YAML")
                 .and("CONSUL_FILES_TARGET", "prod")
@@ -103,11 +137,11 @@ class ConsulPopulateCommandTest {
     }
 
     private void assertConsulKVCorrectlyPopulated() {
-        var keys = toBlocking(consulClient.getKeys("config"));
+        var keys = toBlocking(consulClient.getKeys(""));
         assertThat(keys).hasSize(3);
-        assertThat(keys.get(0)).isEqualTo("config/1.2.3/application");
-        assertThat(keys.get(1)).isEqualTo("config/1.2.3/application,database");
-        assertThat(keys.get(2)).isEqualTo("config/1.2.3/orders-service");
+        assertThat(keys.get(0)).isEqualTo("frog/1.2.3/application");
+        assertThat(keys.get(1)).isEqualTo("frog/1.2.3/application,database");
+        assertThat(keys.get(2)).isEqualTo("frog/1.2.3/orders-service");
 
         var kvApplication = toBlocking(consulClient.getValue(keys.get(0)));
         assertThat(kvApplication.isPresent()).isTrue();

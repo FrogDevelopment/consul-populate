@@ -42,7 +42,7 @@ class PopulateServiceImpl implements PopulateService {
         // Importing data from configured type
         var configsToImport = dataImporter.execute()
                 .entrySet()
-                .stream().collect(Collectors.toMap(entry -> kvPath + '/' + entry.getKey(), Map.Entry::getValue));
+                .stream().collect(Collectors.toMap(entry -> kvPath + entry.getKey(), Map.Entry::getValue));
 
         // Create/Update/Delete config
         final var txnRequest = new TxnRequest();

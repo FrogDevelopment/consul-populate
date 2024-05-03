@@ -1,6 +1,7 @@
 package com.frogdevelopment.consul.populate.config;
 
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -35,6 +36,7 @@ public class GlobalProperties {
     /**
      * ACL token needed to read and write in KV path. When present, will be added to requests using `?token` query parameter
      */
+    @ToString.Exclude
     private Optional<String> aclToken = Optional.empty();
 
     /**
@@ -68,8 +70,9 @@ public class GlobalProperties {
         /**
          * @return Path by concatenating {@code kv.path} & {@code kv.version} if present
          */
+        @ToString.Include(name = "path")
         public String getPath() {
-            return version.map(value -> prefix + "/" + value).orElse(prefix);
+            return version.map(value -> prefix + "/" + value + "/").orElse(prefix + "/");
         }
     }
 }

@@ -19,6 +19,8 @@ import picocli.CommandLine.Option;
 @RequiredArgsConstructor
 public class ConsulPopulateCommand implements Runnable {
 
+    @Option(names = {"--dry-run"}, defaultValue = "false")
+    boolean dryRun;
     @Option(names = {"--consul.host"}, defaultValue = "localhost")
     String consulHost;
     @Option(names = {"--consul.port"}, defaultValue = "8500")
@@ -46,15 +48,17 @@ public class ConsulPopulateCommand implements Runnable {
     }
 
     private final PopulateService populateService;
-    private final GlobalProperties properties;
+    private final GlobalProperties globalProperties;
     private final ImportProperties importProperties;
 
     @Override
     public void run() {
-        // todo temp
-        log.info("GlobalProperties={}", properties);
-        log.info("importProperties={}", importProperties);
+        log.info("Resulting properties from the passed arguments:\n\t- {}\n\t- {}", globalProperties, importProperties);
 
-        populateService.populate();
+        if (dryRun) {
+            log.warn("Nothing done due to --dry-run=true");
+        } else {
+            populateService.populate();
+        }
     }
 }
