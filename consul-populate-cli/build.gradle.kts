@@ -18,7 +18,7 @@ dependencies {
 
     implementation(mn.picocli.asProvider())
     implementation(mn.micronaut.picocli)
-    implementation(projects.consulPopulateApi)
+    implementation(projects.consulPopulateCore)
 
     compileOnly(mn.lombok)
 

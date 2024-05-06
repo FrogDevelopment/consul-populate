@@ -7,6 +7,6 @@ rootProject.name = "consul-populate"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(
-    "consul-populate-api",
-    "consul-populate-cli"
+    "consul-populate-cli",
+    "consul-populate-core"
 )
