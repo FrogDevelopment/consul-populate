@@ -1,6 +1,6 @@
 plugins {
     id("io.micronaut.minimal.library") version "4.3.8"
-    `maven-publish`
+    id("com.frogdevelopment.publish-conventions")
 }
 
 micronaut {
@@ -33,4 +33,15 @@ dependencies {
     testImplementation(libs.testcontainers.core)
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.consul)
+}
+
+publishing {
+    publications {
+        named<MavenPublication>("mavenJava") {
+            pom {
+                name = "Consul Populate - Core"
+                description = "Core library for Consul Populate"
+            }
+        }
+    }
 }

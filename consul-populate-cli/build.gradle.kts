@@ -1,6 +1,8 @@
 plugins {
     id("io.micronaut.minimal.application") version "4.3.8"
+    id("com.frogdevelopment.publish-conventions")
     alias(libs.plugins.jib)
+    alias(libs.plugins.shadow)
 }
 
 micronaut {
@@ -32,19 +34,40 @@ dependencies {
     testImplementation(libs.testcontainers.consul)
     testImplementation(libs.vertx.consul)
     testImplementation(libs.systemlambda)
-
 }
 
 application {
     mainClass.set("com.frogdevelopment.consul.populate.ConsulPopulateCommand")
 }
 
+publishing {
+    publications {
+        named<MavenPublication>("mavenJava") {
+            shadow.component(this)
+
+            pom {
+                name = "Consul Populate - CLI"
+                description = "CLI executable for Consul Populate"
+            }
+        }
+    }
+}
+
 tasks {
+    jar {
+        enabled = false
+    }
+    shadowJar {
+//        minimize() waiting https://github.com/johnrengelman/shadow/pull/876
+        archiveClassifier.set("")
+    }
+
+
     test {
         // https://github.com/stefanbirkner/system-lambda/issues/27
         systemProperty("java.security.manager", "allow")
 
-        // #https://junit-pioneer.org/docs/environment-variables/#warnings-for-reflective-access
+        // https://junit-pioneer.org/docs/environment-variables/#warnings-for-reflective-access
 //        jvmArgs = listOf("--add-opens java.base/java.util=ALL-UNNAMED","--add-opens java.base/java.lang=ALL-UNNAMED")
 
 //        environment.put("CONSUL_HOST", "qwert")
@@ -75,6 +98,12 @@ tasks {
 
         to {
             image = "frogdevelopment/consul-populate:${rootProject.version}"
+            if (System.getenv("CI") == "true") {
+                auth {
+                    username = System.getenv("DOCKER_USR")
+                    password = System.getenv("DOCKER_PSW")
+                }
+            }
         }
 
         container {

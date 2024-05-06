@@ -20,6 +20,12 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.util.ArrayUtils;
 
+/**
+ * Base logic when importing data from files
+ *
+ * @author Le Gall Benoît
+ * @since 1.0.0
+ */
 @RequiredArgsConstructor
 abstract sealed class FilesImporter implements DataImporter
         permits JsonFilesImporter, PropertiesFilesImporter, YamlFilesImporter {
@@ -108,6 +114,10 @@ abstract sealed class FilesImporter implements DataImporter
         return isExtensionAccepted(extension);
     }
 
+    /**
+     * @param extension File extension
+     * @return {@code true} if the extension is supported
+     */
     protected abstract boolean isExtensionAccepted(@NonNull final String extension);
 
     @Nullable

@@ -6,6 +6,8 @@ testcontainers = "1.19.8"
 vertx = "4.5.7"
 
 plugin-jib = "3.4.2"
+plugin-grgit = "5.2.2"
+plugin-shadow = "8.1.1"
 
 [libraries]
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
@@ -18,3 +20,5 @@ vertx-consul = { module = "io.vertx:vertx-consul-client", version.ref = "vertx" 
 
 [plugins]
 jib = { id = "com.google.cloud.tools.jib", version.ref = "plugin-jib" }
+grgit = { id = "org.ajoberstar.grgit", version.ref = "plugin-grgit" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "plugin-shadow" }

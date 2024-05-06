@@ -1,45 +1,32 @@
-name: Release
+name: Publish package to the Maven Central Repository
+
+env:
+  CI: true
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version'
-        required: true
+  release:
+    types: [ created ]
 
 jobs:
-  tagging:
-    name: Release of [${{ github.event.inputs.version }}]
+  publish_release:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
         with:
-          ref: release/${{ github.event.inputs.version }}
-          fetch-depth: 0
+          java-version: '21'
+          distribution: 'temurin'
 
-      - name: Config Git
-        run: |
-          git config user.name ${{ github.actor }}
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3.1.0
 
-      - name: Merge on master
-        run: |
-          git checkout master
-          git merge --no-ff release/${{ github.event.inputs.version }}
-          git push
-
-      - name: Tag on master
-        run: |
-          git tag --annotate --message 'Release ${{ github.event.inputs.version }}' ${{ github.event.inputs.version }}
-          git push origin ${{ github.event.inputs.version }}
-
-      - name: Merge on develop
-        run: |
-          git checkout develop
-          git merge --no-ff release/${{ github.event.inputs.version }}
-          git push
-
-      - name: Delete released branch
-        run: git push origin :release/${{ github.event.inputs.version }}
+      - name: Publish package
+        run: ./gradlew publish
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GNUPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GNUPG_PASSPHRASE }}

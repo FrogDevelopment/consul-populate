@@ -7,6 +7,12 @@ import jakarta.inject.Singleton;
 
 import com.frogdevelopment.consul.populate.DataImporter;
 
+/**
+ * Not supported yet
+ *
+ * @author Le Gall Benoît
+ * @since 1.0.0
+ */
 @Singleton
 @RequiredArgsConstructor
 public class GitImporter implements DataImporter {

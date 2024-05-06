@@ -12,6 +12,12 @@ import jakarta.validation.constraints.Pattern;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Context;
 
+/**
+ * Properties for Consul connection and KV path
+ *
+ * @author Le Gall Benoît
+ * @since 1.0.0
+ */
 @Data
 @Context
 @ConfigurationProperties("consul")
@@ -52,6 +58,12 @@ public class GlobalProperties {
     @NotNull
     private KV kv = new KV();
 
+    /**
+     * KV configuration for the import
+     *
+     * @author Le Gall Benoît
+     * @since 1.0.0
+     */
     @Data
     @ConfigurationProperties("kv")
     public static class KV {
@@ -68,7 +80,7 @@ public class GlobalProperties {
         private Optional<@Pattern(regexp = "[\\w\\-\\.]+") String> version = Optional.empty();
 
         /**
-         * @return Path by concatenating {@code kv.path} & {@code kv.version} if present
+         * @return Path by concatenating {@code kv.path} and {@code kv.version} if present
          */
         @ToString.Include(name = "path")
         public String getPath() {

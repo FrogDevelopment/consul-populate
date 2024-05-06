@@ -8,6 +8,12 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.consul.ConsulClient;
 import io.vertx.ext.consul.ConsulClientOptions;
 
+/**
+ * Factory managing {@link Vertx} classes instances for vertx-consul
+ *
+ * @author Le Gall Benoît
+ * @since 1.0.0
+ */
 @Factory
 public class ConsulFactory {
 

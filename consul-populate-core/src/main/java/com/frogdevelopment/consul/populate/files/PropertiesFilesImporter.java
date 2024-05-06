@@ -15,12 +15,24 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
+/**
+ * Implementation for Properties files import
+ *
+ * @author Le Gall Benoît
+ * @see Properties
+ * @since 1.0.0
+ */
 @Singleton
 @Requires(property = "consul.files.format", value = "PROPERTIES")
 public final class PropertiesFilesImporter extends FilesImporter {
 
     private static final List<String> EXTENSIONS = List.of("properties");
 
+    /**
+     * Constructor
+     *
+     * @param importProperties Properties for the import
+     */
     public PropertiesFilesImporter(final ImportFileProperties importProperties) {
         super(importProperties);
     }
