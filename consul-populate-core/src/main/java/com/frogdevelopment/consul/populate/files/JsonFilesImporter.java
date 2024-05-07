@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 import jakarta.inject.Singleton;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,7 +25,7 @@ public final class JsonFilesImporter extends FilesImporter {
 
     private final ObjectMapper objectMapper;
 
-    public JsonFilesImporter(final ImportFileProperties importProperties, ObjectMapper objectMapper) {
+    public JsonFilesImporter(final ImportFileProperties importProperties, final ObjectMapper objectMapper) {
         super(importProperties);
         this.objectMapper = objectMapper;
     }
@@ -36,8 +37,8 @@ public final class JsonFilesImporter extends FilesImporter {
 
     @Nullable
     @Override
-    protected Map<String, Object> readFile(@NonNull final File file) throws IOException {
-        try (var reader = Files.newBufferedReader(file.toPath())) {
+    protected SequencedMap<String, Object> readFile(@NonNull final File file) throws IOException {
+        try (final var reader = Files.newBufferedReader(file.toPath())) {
             final var typeRef = new TypeReference<LinkedHashMap<String, Object>>() {
             };
             return objectMapper.readValue(reader, typeRef);

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.SequencedMap;
 import jakarta.inject.Singleton;
 
 import org.yaml.snakeyaml.Yaml;
@@ -32,8 +33,8 @@ public final class YamlFilesImporter extends FilesImporter {
 
     @Nullable
     @Override
-    protected Map<String, Object> readFile(@NonNull final File file) throws IOException {
-        try (var reader = Files.newBufferedReader(file.toPath())) {
+    protected SequencedMap<String, Object> readFile(@NonNull final File file) throws IOException {
+        try (final var reader = Files.newBufferedReader(file.toPath())) {
             return yaml.load(reader);
         }
     }

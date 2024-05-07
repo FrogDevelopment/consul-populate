@@ -16,15 +16,6 @@ class YamlFilesImporterTest extends BaseFilesImporterTest {
 
     @Language("YAML")
     static final String EXPECTED = """
-            collection:
-              items:
-              - item_C
-            foo:
-              bar: new_value
-              baz: to_keep
-            simple-value: kept
-            something:
-              new: true
             very:
               deep:
                 nested:
@@ -35,6 +26,18 @@ class YamlFilesImporterTest extends BaseFilesImporterTest {
                           overridden: salut
                         but:
                           not: here
+            foo:
+              bar: new_value
+              baz: to_keep
+            collection:
+              items:
+              - item_C
+            simple-value: kept
+            scalar-value: |-
+              hello world
+              bye-bye world
+            something:
+              new: true
             """;
 
     @Inject

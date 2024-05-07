@@ -20,3 +20,7 @@ collection:
     - item_C
 
 simple-value: kept
+
+scalar-value: |-
+  hello world
+  bye-bye world

@@ -3,9 +3,11 @@ package com.frogdevelopment.consul.populate.files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.SequencedMap;
 import java.util.stream.Collectors;
 import jakarta.inject.Singleton;
 
@@ -30,13 +32,13 @@ public final class PropertiesFilesImporter extends FilesImporter {
 
     @Nullable
     @Override
-    protected Map<String, Object> readFile(@NonNull final File file) throws IOException {
-        try (var reader = Files.newBufferedReader(file.toPath())) {
+    protected SequencedMap<String, Object> readFile(@NonNull final File file) throws IOException {
+        try (final var reader = Files.newBufferedReader(file.toPath())) {
             final var properties = new Properties();
             properties.load(reader);
             return properties.entrySet()
                     .stream()
-                    .collect(Collectors.toMap(entry -> entry.getKey().toString(), Map.Entry::getValue));
+                    .collect(Collectors.toMap(entry -> entry.getKey().toString(), Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
         }
     }
 
