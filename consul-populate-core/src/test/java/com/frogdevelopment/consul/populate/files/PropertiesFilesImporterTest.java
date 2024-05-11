@@ -17,12 +17,12 @@ class PropertiesFilesImporterTest extends BaseFilesImporterTest {
     @Language("PROPERTIES")
     private static final String EXPECTED = """
             collection.items=item_C
+            very.deep.nested.field.that.will.but.not=here
+            very.deep.nested.field.that.will.be.overridden=salut
             foo.bar=new_value
             foo.baz=to_keep
             simple-value=kept
-            something.new=true
-            very.deep.nested.field.that.will.be.overridden=salut
-            very.deep.nested.field.that.will.but.not=here""";
+            something.new=true""";
 
     @Inject
     private PropertiesFilesImporter filesImporter;
