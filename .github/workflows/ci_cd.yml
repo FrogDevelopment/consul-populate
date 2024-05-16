@@ -6,8 +6,8 @@ env:
 on:
   push:
     branches: [ "**" ]
-  pull_request:
-    branches: [ "develop" ]
+  release:
+    types: [ created ]
 
 jobs:
   build:
@@ -49,6 +49,8 @@ jobs:
       - name: Publish package
         run: ./gradlew publish
         env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GNUPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GNUPG_PASSPHRASE }}

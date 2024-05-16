@@ -57,11 +57,10 @@ tasks {
     jar {
         enabled = false
     }
+
     shadowJar {
 //        minimize() waiting https://github.com/johnrengelman/shadow/pull/876
-        archiveClassifier.set("")
     }
-
 
     test {
         // https://github.com/stefanbirkner/system-lambda/issues/27

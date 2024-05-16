@@ -89,10 +89,9 @@ signing {
 }
 
 tasks {
-    matching { it is PublishToMavenRepository && it.repository.name == "sonatype" }.all {
-        onlyIf { releaseVersion }
-    }
-    matching { it is PublishToMavenRepository && it.repository.name == "github" }.all {
-        onlyIf { !releaseVersion }
+    withType<PublishToMavenRepository>().configureEach {
+        onlyIf {
+            (releaseVersion && repository.name == "sonatype") || (!releaseVersion && repository.name == "github")
+        }
     }
 }
