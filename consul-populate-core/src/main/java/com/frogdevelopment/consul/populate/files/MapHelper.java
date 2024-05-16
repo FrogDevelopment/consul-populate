@@ -9,9 +9,22 @@ import java.util.SequencedMap;
 
 import io.micronaut.core.annotation.NonNull;
 
+/**
+ * Helper to merge maps
+ *
+ * @author Le Gall Benoît
+ * @since 1.0.0
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MapHelper {
 
+    /**
+     * Merging maps
+     *
+     * @param source   Source to be merged
+     * @param override Data use to merge
+     * @return the merged result
+     */
     static @NonNull Map<String, SequencedMap<String, Object>> merge(
             @NonNull final Map<String, SequencedMap<String, Object>> source,
             @NonNull final Map<String, SequencedMap<String, Object>> override) {
@@ -28,6 +41,12 @@ public final class MapHelper {
         return merged;
     }
 
+    /**
+     *
+     * @param source Source to be merged
+     * @param override Data use to merge
+     * @return the merged map
+     */
     @SuppressWarnings({"rawtypes", "unchecked"})
     static @NonNull SequencedMap<String, Object> mergeMaps(@NonNull final Map<String, Object> source,
                                                            @NonNull final Map<String, Object> override) {

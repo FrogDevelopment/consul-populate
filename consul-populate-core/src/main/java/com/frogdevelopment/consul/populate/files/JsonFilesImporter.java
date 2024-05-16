@@ -17,6 +17,13 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
+/**
+ * Implementation for JSON files import
+ *
+ * @author Le Gall Benoît
+ * @see ObjectMapper
+ * @since 1.0.0
+ */
 @Singleton
 @Requires(property = "consul.files.format", value = "JSON")
 public final class JsonFilesImporter extends FilesImporter {
@@ -25,6 +32,12 @@ public final class JsonFilesImporter extends FilesImporter {
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * Constructor
+     *
+     * @param importProperties Properties for the import
+     * @param objectMapper     ObjectMapper instance used for Json I/O
+     */
     public JsonFilesImporter(final ImportFileProperties importProperties, final ObjectMapper objectMapper) {
         super(importProperties);
         this.objectMapper = objectMapper;

@@ -19,6 +19,10 @@ import io.vertx.ext.consul.TxnKVOperation;
 import io.vertx.ext.consul.TxnKVVerb;
 import io.vertx.ext.consul.TxnRequest;
 
+/**
+ * @author Le Gall Benoît
+ * @since 1.0.0
+ */
 @Slf4j
 @Singleton
 @RequiredArgsConstructor
@@ -32,7 +36,7 @@ class PopulateServiceImpl implements PopulateService {
     public void populate() {
         try {
             toBlocking(consulClient.leaderStatus());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalStateException("Consul is not reachable/ready to be populate. Please check error logs", e);
         }
 
@@ -40,7 +44,7 @@ class PopulateServiceImpl implements PopulateService {
 
         log.info("Retrieving data to export");
         // Importing data from configured type
-        var configsToImport = dataImporter.execute()
+        final var configsToImport = dataImporter.execute()
                 .entrySet()
                 .stream().collect(Collectors.toMap(entry -> kvPath + entry.getKey(), Map.Entry::getValue));
 
@@ -52,7 +56,7 @@ class PopulateServiceImpl implements PopulateService {
                 .forEach(txnRequest::addOperation);
 
         // retrieve current configs in Consul KV
-        var existingKeysInConsul = toBlocking(consulClient.getKeys(kvPath));
+        final var existingKeysInConsul = toBlocking(consulClient.getKeys(kvPath));
 
         // keep only those that are to be deleted (no present anymore in the data pushed)
         existingKeysInConsul.stream()
@@ -61,7 +65,7 @@ class PopulateServiceImpl implements PopulateService {
                 .forEach(txnRequest::addOperation);
 
         log.info("Exporting data to consul");
-        var result = toBlocking(consulClient.transaction(txnRequest));
+        final var result = toBlocking(consulClient.transaction(txnRequest));
         log.info("succeeded results size: {}", result.getResultsSize());
         if (result.getErrorsSize() > 0) {
             log.error("Some operations ({}) lead to error:{}",

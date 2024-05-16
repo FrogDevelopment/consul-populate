@@ -14,6 +14,13 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
+/**
+ * Implementation for YAML files import
+ *
+ * @author Le Gall Benoît
+ * @see Yaml
+ * @since 1.0.0
+ */
 @Singleton
 @Requires(property = "consul.files.format", value = "YAML")
 public final class YamlFilesImporter extends FilesImporter {
@@ -22,6 +29,11 @@ public final class YamlFilesImporter extends FilesImporter {
 
     private final Yaml yaml = new Yaml();
 
+    /**
+     * Constructor
+     *
+     * @param importProperties Properties for the import
+     */
     public YamlFilesImporter(final ImportFileProperties importProperties) {
         super(importProperties);
     }
