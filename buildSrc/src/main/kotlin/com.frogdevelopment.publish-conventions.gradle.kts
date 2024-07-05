@@ -1,7 +1,10 @@
+import org.jreleaser.model.Active
+import org.jreleaser.model.Signing.Mode
+
 plugins {
     java
     `maven-publish`
-    signing
+    id("org.jreleaser")
 }
 
 java {
@@ -60,38 +63,48 @@ publishing {
 
     repositories {
         maven {
-            name = "sonatype"
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            credentials {
-                username = System.getenv("OSSRH_USERNAME")
-                password = System.getenv("OSSRH_TOKEN")
-            }
-        }
-
-        maven {
-            name = "github"
-            url = uri("https://maven.pkg.github.com/FrogDevelopment/consul-populate")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
+            name = "jreleaser"
+            url = uri(layout.buildDirectory.dir("staging-deploy"))
         }
     }
 }
-val releaseVersion = """^\d+\.\d+\.\d+$""".toRegex().matches(version.toString())
-signing {
-    if (releaseVersion) {
-        val signingKey: String? by project
-        val signingPassword: String? by project
-        useInMemoryPgpKeys(signingKey, signingPassword)
-        sign(publishing.publications["mavenJava"])
+
+val isReleaseVersion = """^\d+\.\d+\.\d+$""".toRegex().matches(version.toString())
+
+jreleaser {
+    gitRootSearch = true
+    dependsOnAssemble = true
+    dryrun = !isReleaseVersion
+
+    signing {
+        active = Active.ALWAYS
+        armored = true
+        verify = false
+        mode = Mode.MEMORY
+    }
+
+    deploy {
+        maven {
+            mavenCentral {
+                create("app") {
+                    active = Active.ALWAYS
+                    url = "https://central.sonatype.com/api/v1/publisher"
+                    applyMavenCentralRules = true
+                    stagingRepository(layout.buildDirectory.dir("staging-deploy").get().toString())
+                    snapshotSupported = true
+                }
+            }
+        }
     }
 }
 
 tasks {
-    withType<PublishToMavenRepository>().configureEach {
-        onlyIf {
-            (releaseVersion && repository.name == "sonatype") || (!releaseVersion && repository.name == "github")
-        }
+    jreleaserDeploy {
+        dependsOn(jreleaserSign)
     }
+
+    jreleaserSign {
+        dependsOn(publish)
+    }
+
 }

@@ -3,7 +3,7 @@ plugins {
     id("org.ajoberstar.grgit") version "5.2.2"
 }
 
-group = "com.frogdevelopment.consul-populate"
+group = "com.frog-development.consul-populate"
 
 repositories {
     mavenCentral()
@@ -53,6 +53,10 @@ fun handleBranch(branchName: String): String {
     val matchBranchResult = """^(?<type>\w+)/(?<details>.+)?$""".toRegex().find(branchName)
     val branchType = matchBranchResult!!.groups["type"]?.value!!
     val branchDetails = matchBranchResult.groups["details"]?.value!!
+
+    if (branchType == "release" || branchType == "hotfix") {
+        return "$branchDetails-SNAPSHOT"
+    }
 
     return "$branchType-$branchDetails-SNAPSHOT"
 }
