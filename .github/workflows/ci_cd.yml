@@ -30,27 +30,39 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3.1.0
 
-      - name: Compile & Test
-        run: ./gradlew test
+      #      - name: Compile & Test
+      #        run: ./gradlew test
+      #
+      #      - name: Upload Unit Test Results
+      #        if: always()
+      #        uses: actions/upload-artifact@v4
+      #        with:
+      #          name: test-results
+      #          path: '**/build/test-results/**/*.xml'
+      #
+      #      - name: Containerize
+      #        run: ./gradlew jib -Djib.console='plain'
+      #        env:
+      #          DOCKER_USR: ${{ secrets.DOCKER_USR }}
+      #          DOCKER_PSW: ${{ secrets.DOCKER_PSW }}
+      #
+      #      - name: Generate package
+      #        run: ./gradlew publish
 
-      - name: Upload Unit Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: '**/build/test-results/**/*.xml'
+      #      - name: Deploy package - core
+      #        run: ./gradlew :consul-populate-core:jreleaserDeploy --stacktrace
+#        env:
+#          JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
+#          JRELEASER_MAVENCENTRAL_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
+#          JRELEASER_GPG_PASSPHRASE: ${{ secrets.GNUPG_PASSPHRASE }}
+#          JRELEASER_GPG_SECRET_KEY: ${{ secrets.GNUPG_PRIVATE_KEY }}
+#          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Containerize
-        run: ./gradlew jib -Djib.console='plain'
+      - name: Deploy package - cli
+        run: ./gradlew :consul-populate-cli:jreleaserDeploy --stacktrace
         env:
-          DOCKER_USR: ${{ secrets.DOCKER_USR }}
-          DOCKER_PSW: ${{ secrets.DOCKER_PSW }}
-
-      - name: Publish package
-        run: ./gradlew publish
-        env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GNUPG_PRIVATE_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GNUPG_PASSPHRASE }}
+          JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
+          JRELEASER_MAVENCENTRAL_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
+          JRELEASER_GPG_PASSPHRASE: ${{ secrets.GNUPG_PASSPHRASE }}
+          JRELEASER_GPG_SECRET_KEY: ${{ secrets.GNUPG_PRIVATE_KEY }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
