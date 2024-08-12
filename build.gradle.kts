@@ -25,7 +25,7 @@ fun computeProjectVersion() {
 
     val computedVersion = when (branchName) {
         "HEAD" -> handleHead()
-        "develop" -> handleDevelop()
+        "main" -> handleMain()
         else -> handleBranch(branchName)
     }
 
@@ -45,8 +45,8 @@ fun handleHead(): String {
     return githubRefName
 }
 
-fun handleDevelop(): String {
-    return "develop-SNAPSHOT"
+fun handleMain(): String {
+    return "main-SNAPSHOT"
 }
 
 fun handleBranch(branchName: String): String {
