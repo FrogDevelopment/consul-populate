@@ -1,10 +1,6 @@
-import org.jreleaser.model.Active
-import org.jreleaser.model.Signing.Mode
-
 plugins {
     java
     `maven-publish`
-    id("org.jreleaser")
 }
 
 java {
@@ -69,42 +65,3 @@ publishing {
     }
 }
 
-val isReleaseVersion = """^\d+\.\d+\.\d+$""".toRegex().matches(version.toString())
-
-jreleaser {
-    gitRootSearch = true
-    dependsOnAssemble = true
-    dryrun = !isReleaseVersion
-
-    signing {
-        active = Active.ALWAYS
-        armored = true
-        verify = false
-        mode = Mode.MEMORY
-    }
-
-    deploy {
-        maven {
-            mavenCentral {
-                create("app") {
-                    active = Active.ALWAYS
-                    url = "https://central.sonatype.com/api/v1/publisher"
-                    applyMavenCentralRules = true
-                    stagingRepository(layout.buildDirectory.dir("staging-deploy").get().toString())
-                    snapshotSupported = true
-                }
-            }
-        }
-    }
-}
-
-tasks {
-    jreleaserDeploy {
-        dependsOn(jreleaserSign)
-    }
-
-    jreleaserSign {
-        dependsOn(publish)
-    }
-
-}

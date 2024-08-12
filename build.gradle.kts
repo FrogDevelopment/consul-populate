@@ -1,9 +1,14 @@
+import org.jreleaser.model.Active
+import org.jreleaser.model.Signing.Mode
+
 plugins {
     java
     id("org.ajoberstar.grgit") version "5.2.2"
+    id("org.jreleaser")
 }
 
 group = "com.frog-development.consul-populate"
+description = "Give a tool to easily push content in Consul KV to be used as distributed configurations"
 
 repositories {
     mavenCentral()
@@ -15,10 +20,12 @@ java {
 }
 
 afterEvaluate {
-    computeProjectVersion()
+    if (version == Project.DEFAULT_VERSION) {
+        computeProjectVersion()
+    }
 }
 
-fun computeProjectVersion() {
+fun computeProjectVersion(): String {
     val branchName = grgit.branch.current().name
 
     println("Current branch: $branchName")
@@ -35,6 +42,8 @@ fun computeProjectVersion() {
     }
 
     println("Computed version: $version")
+
+    return computedVersion
 }
 
 fun handleHead(): String {
@@ -59,4 +68,39 @@ fun handleBranch(branchName: String): String {
     }
 
     return "$branchType-$branchDetails-SNAPSHOT"
+}
+
+val isReleaseVersion = """^\d+\.\d+\.\d+$""".toRegex().matches(version.toString())
+jreleaser {
+    gitRootSearch = true
+    dependsOnAssemble = true
+    dryrun = !isReleaseVersion
+
+    project {
+        version.value(providers.provider { computeProjectVersion() })
+        copyright.set("FrogDevelopment")
+    }
+
+    signing {
+        active = Active.ALWAYS
+        armored = true
+        verify = false
+        mode = Mode.MEMORY
+    }
+
+    deploy {
+        maven {
+            mavenCentral {
+                childProjects.forEach { project ->
+                    create(project.key) {
+                        active = Active.ALWAYS
+                        url = "https://central.sonatype.com/api/v1/publisher"
+                        applyMavenCentralRules = true
+                        stagingRepository(project.value.layout.buildDirectory.dir("staging-deploy").get().toString())
+                        snapshotSupported = true
+                    }
+                }
+            }
+        }
+    }
 }
