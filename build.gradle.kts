@@ -7,9 +7,13 @@ plugins {
     id("org.jreleaser")
 }
 
-group = "com.frog-development.consul-populate"
 description = "Give a tool to easily push content in Consul KV to be used as distributed configurations"
-version = Wrapper(computeProjectVersion())
+
+val versionProvider = Wrapper(computeProjectVersion())
+allprojects {
+    group = "com.frog-development.consul-populate"
+    version = versionProvider
+}
 
 repositories {
     mavenCentral()
