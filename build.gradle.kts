@@ -70,11 +70,14 @@ fun handleBranch(branchName: String): String {
     return "$branchType-$branchDetails-SNAPSHOT"
 }
 
-val isReleaseVersion = """^\d+\.\d+\.\d+$""".toRegex().matches(version.toString())
+fun isReleaseVersion(): Boolean {
+    return """^\d+\.\d+\.\d+$""".toRegex().matches(version.toString())
+}
+
 jreleaser {
     gitRootSearch = true
     dependsOnAssemble = true
-    dryrun = !isReleaseVersion
+    dryrun = providers.provider { !isReleaseVersion() }
 
     project {
         version.value(providers.provider { computeProjectVersion() })
