@@ -11,11 +11,6 @@ group = "com.frog-development.consul-populate"
 description = "Give a tool to easily push content in Consul KV to be used as distributed configurations"
 version = Wrapper(computeProjectVersion())
 
-allprojects {
-    // todo still need to set it to children ?
-    group = rootProject.group
-}
-
 repositories {
     mavenCentral()
 }
@@ -113,4 +108,15 @@ jreleaser {
             }
         }
     }
+}
+
+tasks {
+    jreleaserDeploy {
+        dependsOn(jreleaserSign)
+    }
+
+    jreleaserSign {
+        childProjects.forEach { child -> dependsOn(child.value.tasks.named("publish")) }
+    }
+
 }
