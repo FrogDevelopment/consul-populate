@@ -9,6 +9,12 @@ plugins {
 
 group = "com.frog-development.consul-populate"
 description = "Give a tool to easily push content in Consul KV to be used as distributed configurations"
+version = Wrapper(computeProjectVersion())
+
+allprojects {
+    // todo still need to set it to children ?
+    group = rootProject.group
+}
 
 repositories {
     mavenCentral()
@@ -19,13 +25,20 @@ java {
     targetCompatibility = JavaVersion.toVersion("21")
 }
 
-afterEvaluate {
-    if (version == Project.DEFAULT_VERSION) {
-        computeProjectVersion()
+/**
+ * temporary workaround waiting for project.version to be provider aware.
+ * <ul>
+ * <li><a href="https://github.com/gradle/gradle/issues/25971">workaround</a></li>
+ * <li><a href="https://github.com/gradle/gradle/issues/13672">Project "coordinates" should use providers</a></li>
+ * </ul>
+ */
+class Wrapper(private val version: Provider<String>) {
+    override fun toString(): String {
+        return version.get()
     }
 }
 
-fun computeProjectVersion(): String {
+fun computeProjectVersion(): Provider<String> {
     val branchName = grgit.branch.current().name
 
     println("Current branch: $branchName")
@@ -36,14 +49,9 @@ fun computeProjectVersion(): String {
         else -> handleBranch(branchName)
     }
 
-    allprojects {
-        group = rootProject.group
-        version = computedVersion
-    }
+    println("Computed version: $computedVersion")
 
-    println("Computed version: $version")
-
-    return computedVersion
+    return provider { computedVersion }
 }
 
 fun handleHead(): String {
@@ -77,10 +85,9 @@ fun isReleaseVersion(): Boolean {
 jreleaser {
     gitRootSearch = true
     dependsOnAssemble = true
-    dryrun = providers.provider { !isReleaseVersion() }
+    dryrun = provider { !isReleaseVersion() }
 
     project {
-        version.value(providers.provider { computeProjectVersion() })
         copyright.set("FrogDevelopment")
     }
 
