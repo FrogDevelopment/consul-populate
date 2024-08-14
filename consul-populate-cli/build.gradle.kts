@@ -1,6 +1,6 @@
 plugins {
     id("io.micronaut.minimal.application") version "4.4.2"
-    id("com.frogdevelopment.publish-conventions")
+    id("com.frogdevelopment.jreleaser.publish-convention")
     alias(libs.plugins.jib)
     alias(libs.plugins.shadow)
 }
