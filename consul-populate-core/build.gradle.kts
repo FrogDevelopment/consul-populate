@@ -17,10 +17,12 @@ dependencies {
     annotationProcessor(mn.micronaut.validation.processor)
 
     implementation(mn.micronaut.jackson.databind)
-    implementation(mn.micronaut.validation.asProvider())
+    implementation(mn.micronaut.validation)
     implementation(libs.vertx.consul)
     implementation(libs.commons.io)
     implementation(mn.snakeyaml)
+
+    api("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r")
 
     compileOnly(mn.lombok)
 

@@ -36,12 +36,12 @@ public class ConsulPopulateCommand implements Runnable {
     @Option(names = {"--consul.files.rootPath", "--consul.files.root-path"})
     String consulFileRootPath;
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try {
             final var exitCode = PicocliRunner.execute(ConsulPopulateCommand.class, args);
 
             System.exit(exitCode);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Unexpected exception", e);
             System.exit(CommandLine.ExitCode.SOFTWARE);
         }
