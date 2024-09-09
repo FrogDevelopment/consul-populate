@@ -1,21 +1,25 @@
 [versions]
 commons-io = "2.21.0"
+commons-lang3 = "3.18.0"
 jetbrains = "26.0.2-1"
 systemlambda = "1.2.1"
 testcontainers = "1.21.3"
 vertx = "5.0.5"
+jgit = "7.4.0.202509020913-r"
 
 plugin-jib = "3.5.1"
 plugin-shadow = "9.3.0"
 
 [libraries]
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains" }
 systemlambda = { module = "com.github.stefanbirkner:system-lambda", version.ref = "systemlambda" }
 testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 testcontainers-consul = { module = "org.testcontainers:consul", version.ref = "testcontainers" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 vertx-consul = { module = "io.vertx:vertx-consul-client", version.ref = "vertx" }
+jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit"}
 
 [plugins]
 jib = { id = "com.google.cloud.tools.jib", version.ref = "plugin-jib" }

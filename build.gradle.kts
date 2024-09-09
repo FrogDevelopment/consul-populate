@@ -5,7 +5,7 @@ plugins {
     jacoco
 }
 
-version = "1.2.7"
+version = "1.3.0-SNAPSHOT"
 group = "com.frogdevelopment.consul.populate"
 
 repositories {
@@ -24,6 +24,8 @@ sonar {
         property("sonar.projectKey", "FrogDevelopment_consul-populate")
         property("sonar.organization", "frogdevelopment")
         property("sonar.junit.reportPaths", "build/test-results/test/")
+        property("sonar.inclusions", "**/src/main/**/*")
+        property("sonar.test.exclusions", "**/src/test/**/*")
     }
 }
 
@@ -36,19 +38,3 @@ testing {
         }
     }
 }
-
-tasks {
-    test {
-        finalizedBy(jacocoTestReport)
-    }
-
-    jacocoTestReport {
-        dependsOn(test)
-
-        reports {
-            xml.required.set(true)
-            html.required.set(false)
-        }
-    }
-}
-
