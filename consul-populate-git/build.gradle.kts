@@ -12,30 +12,36 @@ micronaut {
     }
 }
 
+
 dependencies {
     annotationProcessor(mn.lombok)
     annotationProcessor(mn.micronaut.validation.processor)
 
-    implementation(mn.micronaut.jackson.databind)
+    implementation(mn.micronaut.context)
+    implementation(mn.micronaut.management)
     implementation(mn.micronaut.validation)
-    implementation(libs.vertx.consul)
+    implementation(mn.micronaut.jackson.databind)
+    implementation(projects.consulPopulateCore)
+    implementation(libs.jgit)
     implementation(libs.commons.io)
-    implementation(mn.snakeyaml)
+    implementation("org.apache.commons:commons-lang3:3.18.0")
 
     compileOnly(mn.lombok)
 
     runtimeOnly(mn.logback.classic)
 
-    testImplementation(libs.jetbrains.annotations)
     testImplementation(mn.assertj.core)
     testImplementation(mn.junit.jupiter.params)
     testImplementation(mn.mockito.junit.jupiter)
     testImplementation(libs.testcontainers.core)
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.consul)
+    testImplementation(libs.vertx.consul)
+    testImplementation(libs.systemlambda)
 
     testRuntimeOnly(mn.junit.jupiter.engine)
     testRuntimeOnly(mn.junit.platform.launcher)
+    testRuntimeOnly(mn.snakeyaml)
 }
 
 publishing {
@@ -44,9 +50,14 @@ publishing {
             from(components["java"])
 
             pom {
-                name = "Consul Populate - Core"
-                description = "Core library for Consul Populate"
+                name = "Consul Populate - Git"
+                description = "Git library for Consul Populate"
             }
         }
     }
 }
+
+tasks.test {
+    useJUnitPlatform()
+}
+

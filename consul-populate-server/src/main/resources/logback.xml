@@ -9,10 +9,9 @@
         </encoder>
     </appender>
 
-    <logger name="org.testcontainers" level="DEBUG"/>
-    <!--    <logger name="org.eclipse.jgit" level="DEBUG"/>-->
+        <logger name="com.frogdevelopment" level="DEBUG"/>
 
-    <root level="info">
+    <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
