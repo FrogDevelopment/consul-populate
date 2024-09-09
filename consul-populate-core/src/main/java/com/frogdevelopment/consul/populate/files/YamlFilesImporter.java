@@ -3,14 +3,13 @@ package com.frogdevelopment.consul.populate.files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.SequencedMap;
-import jakarta.inject.Singleton;
 
 import org.yaml.snakeyaml.Yaml;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
@@ -21,8 +20,6 @@ import io.micronaut.core.annotation.Nullable;
  * @see Yaml
  * @since 1.0.0
  */
-@Singleton
-@Requires(property = "consul.files.format", value = "YAML")
 public final class YamlFilesImporter extends FilesImporter {
 
     private static final List<String> EXTENSIONS = List.of("yaml", "yml");
@@ -34,8 +31,8 @@ public final class YamlFilesImporter extends FilesImporter {
      *
      * @param importProperties Properties for the import
      */
-    public YamlFilesImporter(final ImportFileProperties importProperties) {
-        super(importProperties);
+    public YamlFilesImporter(final Path rootPath, final Path targetPath) {
+        super(rootPath, targetPath);
     }
 
     @Override
