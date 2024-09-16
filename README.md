@@ -10,5 +10,11 @@ Alternative to [git2consul](https://github.com/breser/git2consul) which is not m
 
 ## Documentation
 
-Read [Wiki pages](https://github.com/FrogDevelopment/consul-populate/wiki) for more details of how to configure and use
-it.
+Read the [Wiki pages](https://github.com/FrogDevelopment/consul-populate/wiki) for more details of how to configure and
+use it.
+
+## Advantages
+
+1. :baby: Easy to configure
+2. :racing_car: Rapid to execute
+3. :atom_symbol: Atomic transaction (read [Consul API > Transactions HTTP API](https://developer.hashicorp.com/consul/api-docs/txn) for more details.)
