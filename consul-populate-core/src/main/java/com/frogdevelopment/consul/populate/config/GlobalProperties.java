@@ -77,7 +77,7 @@ public class GlobalProperties {
         /**
          * Version of the configuration. When present, will be used in the KV path
          */
-        private Optional<@Pattern(regexp = "[\\w\\-\\.]+") String> version = Optional.empty();
+        private Optional<@Pattern(regexp = "[\\w\\-.]+") String> version = Optional.empty();
 
         /**
          * @return Path by concatenating {@code kv.path} and {@code kv.version} if present
