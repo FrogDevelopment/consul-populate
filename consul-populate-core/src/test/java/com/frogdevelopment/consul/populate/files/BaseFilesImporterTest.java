@@ -22,7 +22,6 @@ abstract class BaseFilesImporterTest implements TestPropertyProvider {
                 .orElseThrow();
         return Map.of(
                 "consul.files.target", "test",
-                "consul.files.root-path", rootPath,
-                "consul.kv.prefix", "config/my/app");
+                "consul.files.root-path", rootPath);
     }
 }
