@@ -71,7 +71,7 @@ public class GlobalProperties {
         /**
          * Prefix for the KV path where the configuration is stored. Defaults to {@code config}
          */
-        @Pattern(regexp = "[\\w\\-]+")
+        @Pattern(regexp = "(?>[\\w\\-]+/)*[\\w\\-]+")
         private String prefix = "config";
 
         /**
