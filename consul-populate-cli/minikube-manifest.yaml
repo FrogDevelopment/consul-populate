@@ -30,7 +30,7 @@ spec:
         - env:
             - name: CONSUL_DISABLE_PERM_MGMT
               value: "true"
-          image: registry-jpe2.r-local.net/dockerhub/hashicorp/consul:1.18.1
+          image: hashicorp/consul:1.18.1
           imagePullPolicy: IfNotPresent
           name: consul
           ports:
