@@ -25,6 +25,12 @@ public class ConsulPopulateCommand implements Runnable {
     String consulHost;
     @Option(names = {"--consul.port"}, defaultValue = "8500")
     int consulPort;
+    @Option(names = {"--consul.acl-token"})
+    String aclToken;
+    @Option(names = {"--consul.dc"})
+    String dc;
+    @Option(names = {"--consul.timeout"})
+    Long timeout;
     @Option(names = {"--consul.kv.prefix"})
     String consulKvPrefix;
     @Option(names = {"--consul.kv.version"})
@@ -36,12 +42,12 @@ public class ConsulPopulateCommand implements Runnable {
     @Option(names = {"--consul.files.rootPath", "--consul.files.root-path"})
     String consulFileRootPath;
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try {
             final var exitCode = PicocliRunner.execute(ConsulPopulateCommand.class, args);
 
             System.exit(exitCode);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Unexpected exception", e);
             System.exit(CommandLine.ExitCode.SOFTWARE);
         }
