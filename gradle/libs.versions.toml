@@ -6,7 +6,7 @@ testcontainers = "1.20.2"
 vertx = "4.5.10"
 
 plugin-jib = "3.4.3"
-plugin-shadow = "8.1.1"
+plugin-shadow = "8.3.6"
 
 [libraries]
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
@@ -19,4 +19,4 @@ vertx-consul = { module = "io.vertx:vertx-consul-client", version.ref = "vertx" 
 
 [plugins]
 jib = { id = "com.google.cloud.tools.jib", version.ref = "plugin-jib" }
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "plugin-shadow" }
+shadow = { id = "com.gradleup.shadow", version.ref = "plugin-shadow" }
