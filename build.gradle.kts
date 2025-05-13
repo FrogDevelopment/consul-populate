@@ -17,7 +17,7 @@ java {
 
 tasks {
     wrapper {
-        gradleVersion = "8.10.2"
+        gradleVersion = "8.14"
         distributionType = Wrapper.DistributionType.BIN
     }
 }
