@@ -38,6 +38,8 @@ dependencies {
 publishing {
     publications {
         named<MavenPublication>("mavenJava") {
+            from(components["java"])
+
             pom {
                 name = "Consul Populate - Core"
                 description = "Core library for Consul Populate"

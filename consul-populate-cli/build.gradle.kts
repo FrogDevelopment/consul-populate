@@ -43,7 +43,7 @@ application {
 publishing {
     publications {
         named<MavenPublication>("mavenJava") {
-            shadow.component(this)
+            from(components["shadow"])
 
             pom {
                 name = "Consul Populate - CLI"
@@ -59,7 +59,7 @@ tasks {
     }
 
     shadowJar {
-//        minimize() waiting https://github.com/johnrengelman/shadow/pull/876
+        minimize()
     }
 
     test {
