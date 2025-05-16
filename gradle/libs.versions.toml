@@ -4,6 +4,7 @@ jetbrains = "26.0.2-1"
 systemlambda = "1.2.1"
 testcontainers = "1.21.3"
 vertx = "5.0.5"
+jgit = "7.2.0.202503040940-r"
 
 plugin-jib = "3.4.5"
 plugin-shadow = "9.2.2"
@@ -16,6 +17,7 @@ testcontainers-core = { module = "org.testcontainers:testcontainers", version.re
 testcontainers-consul = { module = "org.testcontainers:consul", version.ref = "testcontainers" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 vertx-consul = { module = "io.vertx:vertx-consul-client", version.ref = "vertx" }
+jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit"}
 
 [plugins]
 jib = { id = "com.google.cloud.tools.jib", version.ref = "plugin-jib" }

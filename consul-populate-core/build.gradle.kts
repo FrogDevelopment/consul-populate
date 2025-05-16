@@ -22,7 +22,7 @@ dependencies {
     implementation(libs.commons.io)
     implementation(mn.snakeyaml)
 
-    api("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r")
+    api(libs.jgit)
 
     compileOnly(mn.lombok)
 
