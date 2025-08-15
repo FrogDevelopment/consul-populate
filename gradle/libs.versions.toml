@@ -6,7 +6,7 @@ testcontainers = "1.21.0"
 vertx = "4.5.14"
 
 plugin-jib = "3.4.5"
-plugin-shadow = "8.3.6"
+plugin-shadow = "9.0.2"
 
 [libraries]
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
