@@ -1,5 +1,5 @@
 plugins {
-    id("io.micronaut.minimal.application") version "4.5.3"
+    id("io.micronaut.minimal.application") version "4.5.5"
     id("com.frogdevelopment.jreleaser.publish-convention")
     alias(libs.plugins.jib)
     alias(libs.plugins.shadow)
@@ -34,6 +34,9 @@ dependencies {
     testImplementation(libs.testcontainers.consul)
     testImplementation(libs.vertx.consul)
     testImplementation(libs.systemlambda)
+
+    testRuntimeOnly(mn.junit.jupiter.engine)
+    testRuntimeOnly(mn.junit.platform.launcher)
 }
 
 application {
