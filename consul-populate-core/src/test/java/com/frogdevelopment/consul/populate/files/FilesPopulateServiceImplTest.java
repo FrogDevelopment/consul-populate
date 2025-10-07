@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import jakarta.inject.Inject;
 
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ import io.vertx.ext.consul.ConsulClient;
 class FilesPopulateServiceImplTest extends BaseFilesImporterTest {
 
     @Container
-    public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.18.1");
+    public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.21");
 
     @Inject
     private PopulateService populateService;
