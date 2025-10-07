@@ -5,6 +5,7 @@ import lombok.ToString;
 
 import java.util.Optional;
 import java.util.OptionalLong;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -22,6 +23,11 @@ import io.micronaut.context.annotation.Context;
 @Context
 @ConfigurationProperties("consul")
 public class GlobalProperties {
+
+    /**
+     * Consul URI.
+     */
+    private Optional<String> uri = Optional.empty();
 
     /**
      * Consul host. Defaults to {@code localhost}
