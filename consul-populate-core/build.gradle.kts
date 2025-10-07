@@ -1,5 +1,5 @@
 plugins {
-    id("io.micronaut.minimal.library") version "4.5.3"
+    id("io.micronaut.minimal.library") version "4.5.5"
     id("com.frogdevelopment.jreleaser.publish-convention")
 }
 
@@ -33,6 +33,9 @@ dependencies {
     testImplementation(libs.testcontainers.core)
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.consul)
+
+    testRuntimeOnly(mn.junit.jupiter.engine)
+    testRuntimeOnly(mn.junit.platform.launcher)
 }
 
 publishing {

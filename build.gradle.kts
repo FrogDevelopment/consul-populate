@@ -14,10 +14,3 @@ java {
         vendor = JvmVendorSpec.ADOPTIUM
     }
 }
-
-tasks {
-    wrapper {
-        gradleVersion = "8.14"
-        distributionType = Wrapper.DistributionType.BIN
-    }
-}

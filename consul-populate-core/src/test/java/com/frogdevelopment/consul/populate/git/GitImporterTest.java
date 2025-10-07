@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.catchException;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import jakarta.inject.Inject;
 
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ import io.micronaut.test.support.TestPropertyProvider;
 class GitImporterTest implements TestPropertyProvider {
 
     @Container
-    public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.18.1");
+    public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.21");
 
     @Inject
     private PopulateService populateService;
