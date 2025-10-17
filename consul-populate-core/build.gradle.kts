@@ -1,5 +1,5 @@
 plugins {
-    id("io.micronaut.minimal.library") version "4.5.5"
+    id("io.micronaut.minimal.library") version "4.6.0"
     id("com.frogdevelopment.jreleaser.publish-convention")
 }
 
