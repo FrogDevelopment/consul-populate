@@ -60,7 +60,11 @@ abstract sealed class FilesImporter implements DataImporter
             for (final var entry : merged.entrySet()) {
                 final var key = FilenameUtils.removeExtension(entry.getKey());
                 final var value = writeValueAsString(entry.getValue());
-                result.put(key, value);
+                if (value.isEmpty()) {
+                    log.warn("Skipping empty configurations for file '{}'", entry.getKey());
+                } else {
+                    result.put(key, value);
+                }
             }
 
             return result;
