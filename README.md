@@ -1,4 +1,5 @@
 ![Build](https://github.com/FrogDevelopment/consul-populate/actions/workflows/ci_cd.yml/badge.svg)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=FrogDevelopment_consul-populate&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=FrogDevelopment_consul-populate)
 ![GitHub Release](https://img.shields.io/github/v/release/FrogDevelopment/consul-populate)
 [![Release date](https://img.shields.io/github/release-date/FrogDevelopment/consul-populate)](https://packagist.org/packages/FrogDevelopment/consul-populate)
 
