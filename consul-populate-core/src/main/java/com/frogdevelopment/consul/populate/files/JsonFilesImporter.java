@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SequencedMap;
+
 import jakarta.inject.Singleton;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -61,6 +62,9 @@ public final class JsonFilesImporter extends FilesImporter {
     @NonNull
     @Override
     protected String writeValueAsString(@NonNull final Map<String, Object> map) throws JsonProcessingException {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);
     }
 }

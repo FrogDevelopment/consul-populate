@@ -2,6 +2,8 @@ package com.frogdevelopment.consul.populate.files;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.TreeMap;
+
 import jakarta.inject.Inject;
 
 import org.intellij.lang.annotations.Language;
@@ -51,6 +53,16 @@ class PropertiesFilesImporterTest extends BaseFilesImporterTest {
         assertThat(result)
                 .hasSize(1)
                 .containsEntry("application", EXPECTED);
+    }
+
+    @Test
+    void should_handle_empty() {
+        // given
+        // when
+        final var value = filesImporter.writeValueAsString(new TreeMap<>());
+
+        // then
+        assertThat(value).isBlank();
     }
 
 }
