@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.SequencedMap;
+
 import jakarta.inject.Singleton;
 
 import org.yaml.snakeyaml.Yaml;
@@ -54,6 +55,9 @@ public final class YamlFilesImporter extends FilesImporter {
     @NonNull
     @Override
     protected String writeValueAsString(@NonNull final Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
         return yaml.dumpAsMap(map);
     }
 }

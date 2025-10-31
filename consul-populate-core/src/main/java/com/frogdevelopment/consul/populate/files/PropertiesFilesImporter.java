@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.SequencedMap;
 import java.util.stream.Collectors;
+
 import jakarta.inject.Singleton;
 
 import io.micronaut.context.annotation.Requires;
@@ -57,6 +58,9 @@ public final class PropertiesFilesImporter extends FilesImporter {
     @NonNull
     @Override
     protected String writeValueAsString(@NonNull final Map<String, Object> map) {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
         return map.entrySet()
                 .stream()
                 .map(entry -> entry.getKey() + "=" + entry.getValue())

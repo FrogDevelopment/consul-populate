@@ -2,12 +2,16 @@ package com.frogdevelopment.consul.populate.files;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.TreeMap;
+
 import jakarta.inject.Inject;
 
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.micronaut.context.annotation.Property;
 
@@ -75,5 +79,15 @@ class JsonFilesImporterTest extends BaseFilesImporterTest {
         assertThat(result)
                 .hasSize(1)
                 .containsEntry("application", EXPECTED);
+    }
+
+    @Test
+    void should_handle_empty() throws JsonProcessingException {
+        // given
+        // when
+        final var value = filesImporter.writeValueAsString(new TreeMap<>());
+
+        // then
+        assertThat(value).isBlank();
     }
 }
