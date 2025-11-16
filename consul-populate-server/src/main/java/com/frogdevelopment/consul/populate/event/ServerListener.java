@@ -11,7 +11,6 @@ import com.frogdevelopment.consul.populate.git.GitImportJob;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.runtime.event.annotation.EventListener;
-import io.micronaut.runtime.server.event.ServerShutdownEvent;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
 import io.micronaut.scheduling.annotation.Async;
 
@@ -31,12 +30,5 @@ public class ServerListener {
         } catch (final GitAPIException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    @EventListener
-    public void onServerShutdownEvent(final ServerShutdownEvent event) {
-        final var gitImportJob = beanContext.getBean(GitImportJob.class);
-
-        gitImportJob.close();
     }
 }

@@ -3,39 +3,34 @@ package com.frogdevelopment.consul.populate.git;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.nio.file.Path;
+import jakarta.inject.Named;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
 
 import com.frogdevelopment.consul.populate.PopulateService;
 
+import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.TaskScheduler;
 
+/**
+ * Orchestrates git repository population and optional polling for changes.
+ * Triggers Consul population and sets up scheduled pulls when polling is enabled.
+ *
+ * @author Le Gall Benoît
+ * @since 1.2.0
+ */
 @Slf4j
 @RequiredArgsConstructor
-public class GitImportJob implements AutoCloseable {
+public class GitImportJob {
 
     private final GitProperties gitProperties;
-    private final Path repositoryDirectory;
     private final PopulateService populateService;
+    @Named(TaskExecutors.SCHEDULED)
     private final TaskScheduler taskScheduler;
-
-    private Git git;
+    private final Git git;
 
     public void init() throws GitAPIException {
-        log.debug("Cloning repository [{}]", gitProperties.getUri());
-        git = Git.cloneRepository()
-                .setURI(gitProperties.getUri())
-                .setDirectory(repositoryDirectory.toFile())
-                .setGitDir(repositoryDirectory.resolve(Constants.DOT_GIT).toFile())
-                .setBranch(gitProperties.getBranch())
-                .setRemote(Constants.DEFAULT_REMOTE_NAME)
-                .call();
-
         log.info("Populating Consul with repository");
         populateService.populate();
 
@@ -66,23 +61,4 @@ public class GitImportJob implements AutoCloseable {
             log.error("Scheduled task encountered an error. Please check logs", e);
         }
     }
-
-    @Override
-    public void close() {
-        try {
-            if (git != null) {
-                git.close();
-            }
-        } catch (final Exception e) {
-            log.error("Error closing git repository", e);
-        }
-
-        try {
-            log.info("Deleting Git Repository...");
-            FileUtils.deleteDirectory(repositoryDirectory.toFile());
-        } catch (final IOException e) {
-            log.error("Failed to delete repository", e);
-        }
-    }
-
 }
