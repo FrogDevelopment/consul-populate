@@ -48,6 +48,9 @@ public class GitProperties {
     /** Local directory path where the repository will be cloned (default: /tmp) */
     private Path localPath = Path.of("/tmp");
 
+    /** Whether to verify SSL certificates (default: true). Set to false for self-signed certificates */
+    private boolean sslVerify = true;
+
     /** Polling configuration for detecting repository changes */
     private Polling polling = new Polling();
 
