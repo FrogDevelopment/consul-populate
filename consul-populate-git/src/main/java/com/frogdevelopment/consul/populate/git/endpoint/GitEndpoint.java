@@ -12,8 +12,18 @@ import com.frogdevelopment.consul.populate.git.GitImportJob;
 import com.frogdevelopment.consul.populate.git.GitProperties;
 import com.frogdevelopment.consul.populate.git.RepositoryDirectoryProvider;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.annotation.Body;
+import io.micronaut.http.annotation.Header;
+import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.Status;
 import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.management.endpoint.annotation.Read;
+import io.micronaut.management.endpoint.annotation.Selector;
+import io.micronaut.management.endpoint.annotation.Write;
 
 @Slf4j
 @Endpoint(value = "git", defaultSensitive = false)
@@ -87,10 +97,57 @@ public class GitEndpoint {
                 gitImportJob.getLastPullTime(),
                 gitImportJob.getLastPullDuration(),
                 gitImportJob.getLastPullOutcome()
-                );
+        );
     }
 
-//    @Write
-//    public OperationResponse pullNow() { /* async trigger git.pull() */ }
+    @Write
+    @Status(HttpStatus.OK)
+    public HttpResponse<Void> handleGitActions(@Selector final String action,
+                                 HttpRequest<?> request,
+                                 @Nullable @Header("X-GitHub-Event") final String eventType,
+                                 @Nullable @Header("X-Hub-Signature-256") final String signature,
+                                 @QueryValue(defaultValue = "false") final boolean enable,
+                                 @Nullable @Body final Object payload) {
+        return switch (action) {
+            case "polling" -> handlePolling(enable);
+            case "webhook" -> handleWebhook(eventType, signature, payload);
+            case "pull" -> handlePull();
+            default -> {
+                log.warn("invalid action {}", action);
+                yield HttpResponse.notFound();
+            }
+        };
+    }
+
+    private HttpResponse<Void> handlePolling(final boolean enable) {
+        log.warn("Git polling: {}", enable);
+        return HttpResponse.ok();
+    }
+
+    private HttpResponse<Void> handleWebhook(@Nullable final String eventType,
+                               @Nullable final String signature,
+                               @Nullable final Object payload) {
+        if (!"push".equals(eventType)) {// todo make the eventType parametrable ?
+            return  HttpResponse.notModified();
+        }
+        verifySignature(signature, payload);
+
+        log.warn("Git webhook: {} -> {}", eventType, payload);
+
+        return HttpResponse.accepted();
+    }
+
+    private void verifySignature(String signature, Object payload) {
+        final var secretToken = "secret given to GitHub for webhook";
+        // fixme to do/ algorithm HMAC, hash SHA-256
+        //  check if library exists
+
+    }
+
+    private HttpResponse<Void> handlePull() {
+        log.warn("Git pull: {}", gitProperties.getBranch());
+
+        return HttpResponse.accepted();
+    }
 
 }
