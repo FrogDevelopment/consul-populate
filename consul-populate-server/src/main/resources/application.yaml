@@ -1,22 +1,3 @@
 micronaut:
   application:
     name: consul-populate-server
-
-consul:
-  host: ${CONSUL_HOST:localhost}
-  port: ${CONSUL_PORT:8500}
-  kv:
-    prefix: config/git
-    version: 123
-  git:
-    uri: https://github.com/FrogDevelopper/nihongo-configuration
-    token: xxxxxx
-    branch: feature/test
-    polling:
-      enabled: true
-      delay: 15s
-    files:
-      #      root-path: xxx
-      #      target: yyy
-      format: yaml
-    local-path: /tmp/consul
