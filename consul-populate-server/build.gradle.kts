@@ -15,6 +15,8 @@ micronaut {
 dependencies {
     implementation(projects.consulPopulateGit)
 
+    implementation(mn.micronaut.management)
+
     runtimeOnly(mn.logback.classic)
     runtimeOnly(mn.snakeyaml)
 }

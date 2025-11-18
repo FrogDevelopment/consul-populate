@@ -3,6 +3,9 @@ package com.frogdevelopment.consul.populate.git;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -10,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.eclipse.jgit.api.Git;
 
 import com.frogdevelopment.consul.populate.PopulateService;
@@ -37,6 +41,9 @@ public class GitImportJob {
 
     private final AtomicReference<ScheduledFuture<?>> scheduledFutureRef = new AtomicReference<>();
     private final AtomicBoolean stopping = new AtomicBoolean(false);
+    private final AtomicReference<Instant> lastPullTimeRef = new AtomicReference<>(null);
+    private final AtomicReference<Duration> lastPullDurationRef = new AtomicReference<>(null);
+    private final AtomicReference<String> lastPullOutcomeRef = new AtomicReference<>(null);
 
     public void start() {
         log.info("Populating Consul with repository");
@@ -56,7 +63,7 @@ public class GitImportJob {
 
         final var polling = gitProperties.getPolling();
         log.debug("Scheduling pull command with fixed delay={}", polling.getDelay());
-        final var scheduledFuture = taskScheduler.scheduleWithFixedDelay(polling.getDelay(), polling.getDelay(), this::pull);
+        final var scheduledFuture = taskScheduler.scheduleWithFixedDelay(Duration.ZERO, polling.getDelay(), this::pull);
         scheduledFutureRef.set(scheduledFuture);
     }
 
@@ -67,9 +74,12 @@ public class GitImportJob {
         }
         try {
             log.debug("Pull repository");
-            final var result = git.pull()
-                    .call();
-            log.debug("Repository updated: {}", result.isSuccessful());
+            final var now = Instant.now();
+            lastPullTimeRef.set(now);
+            final var pullStatus = git.pull().call().isSuccessful() ? "SUCCESS" : "FAILURE";
+            lastPullDurationRef.set(Duration.between(now, Instant.now()));
+            lastPullOutcomeRef.set(pullStatus);
+            log.debug("Repository updated: {}", pullStatus);
         } catch (final Exception e) {
             log.error("Scheduled task encountered an error. Please check logs", e);
         }
@@ -84,5 +94,22 @@ public class GitImportJob {
                 scheduledFuture.cancel(true);
             }
         }
+    }
+
+    public String getLastPullTime() {
+        return Optional.ofNullable(lastPullTimeRef.get())
+                .map(Instant::toString)
+                .orElse(null);
+    }
+
+    public String getLastPullDuration() {
+        return Optional.ofNullable(lastPullDurationRef.get())
+                .map(Duration::toMillis)
+                .map(millis -> DurationFormatUtils.formatDuration(millis , "ss.SSS's'"))
+                .orElse(null);
+    }
+
+    public String getLastPullOutcome() {
+        return lastPullOutcomeRef.get();
     }
 }

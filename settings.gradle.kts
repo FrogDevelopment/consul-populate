@@ -10,5 +10,6 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 include(
     "consul-populate-cli",
     "consul-populate-core",
+    "consul-populate-git",
     "consul-populate-server"
 )
