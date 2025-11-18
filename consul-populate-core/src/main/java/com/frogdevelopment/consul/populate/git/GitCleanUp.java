@@ -10,6 +10,7 @@ import jakarta.inject.Singleton;
 import org.apache.commons.io.FileUtils;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Blocking;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.runtime.event.annotation.EventListener;
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
@@ -35,6 +36,7 @@ public class GitCleanUp {
      *
      * @param ignored the server shutdown event
      */
+    @Blocking
     @EventListener
     public void onServerShutdownEvent(final ServerShutdownEvent ignored) {
         try {
