@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -21,6 +22,7 @@ import io.micronaut.scheduling.TaskScheduler;
  * @since 1.2.0
  */
 @Slf4j
+@Singleton
 @RequiredArgsConstructor
 public class GitImportJob {
 
