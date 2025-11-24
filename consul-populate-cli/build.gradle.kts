@@ -78,6 +78,10 @@ tasks {
         dependsOn(shadowJar)
     }
 
+    publish {
+        dependsOn(assemble)
+    }
+
     test {
         // https://github.com/stefanbirkner/system-lambda/issues/27
         systemProperty("java.security.manager", "allow")
