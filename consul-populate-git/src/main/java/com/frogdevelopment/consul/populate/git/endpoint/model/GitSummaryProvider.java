@@ -1,4 +1,4 @@
-package com.frogdevelopment.consul.populate.git.endpoint;
+package com.frogdevelopment.consul.populate.git.endpoint.model;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,21 +10,21 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.URIish;
 
-import com.frogdevelopment.consul.populate.git.GitImportJob;
 import com.frogdevelopment.consul.populate.git.GitProperties;
 import com.frogdevelopment.consul.populate.git.RepositoryDirectoryProvider;
+import com.frogdevelopment.consul.populate.git.pull.GitPull;
 
 @Slf4j
 @Singleton
 @RequiredArgsConstructor
-class GitSummaryProvider {
+public class GitSummaryProvider {
 
     private final Git git;
-    private final GitImportJob gitImportJob;
+    private final GitPull gitPull;
     private final GitProperties gitProperties;
     private final RepositoryDirectoryProvider repositoryDirectoryProvider;
 
-    GitSummary generateSummary() {
+    public GitSummary generateSummary() {
         final var repoSummary = createRepoInfo();
         final var pollingSummary = createPollingSummary();
         return new GitSummary(repoSummary,
@@ -82,9 +82,10 @@ class GitSummaryProvider {
         return new GitSummary.Polling(
                 pollingProps.isEnabled(),
                 pollingProps.getDelay().toString(),
-                gitImportJob.getLastPullTime(),
-                gitImportJob.getLastPullDuration(),
-                gitImportJob.getLastPullOutcome()
+                gitPull.getOrigin(),
+                gitPull.getLastPullTime(),
+                gitPull.getLastPullDuration(),
+                gitPull.getLastPullOutcome()
         );
     }
 }

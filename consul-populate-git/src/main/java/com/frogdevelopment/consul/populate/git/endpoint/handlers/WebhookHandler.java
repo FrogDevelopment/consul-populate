@@ -1,4 +1,4 @@
-package com.frogdevelopment.consul.populate.git.endpoint;
+package com.frogdevelopment.consul.populate.git.endpoint.handlers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +14,7 @@ import javax.crypto.spec.SecretKeySpec;
 import jakarta.inject.Singleton;
 
 import com.frogdevelopment.consul.populate.git.GitProperties;
+import com.frogdevelopment.consul.populate.git.GitProperties.Webhook.WebhookHeader;
 
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
@@ -23,14 +24,14 @@ import io.micronaut.http.HttpResponse;
 @Slf4j
 @Singleton
 @RequiredArgsConstructor
-class WebhookHandler {
+public class WebhookHandler {
 
-    private static final GitProperties.Webhook.WebhookHeader GITHUB_WEBHOOK_HEADER = new GitProperties.Webhook.WebhookHeader("X-GitHub-Event", "push", "X-Hub-Signature-256");
-    private static final GitProperties.Webhook.WebhookHeader BITBUCKET_WEBHOOK_HEADER = new GitProperties.Webhook.WebhookHeader("X-Event-Key", "repo:push", "X-Hub-Signature");
+    private static final WebhookHeader GITHUB_WEBHOOK_HEADER = new WebhookHeader("X-GitHub-Event", "push", "X-Hub-Signature-256");
+    private static final WebhookHeader BITBUCKET_WEBHOOK_HEADER = new WebhookHeader("X-Event-Key", "repo:push", "X-Hub-Signature");
 
     private final GitProperties gitProperties;
 
-    HttpResponse<Void> handle(final HttpRequest<?> request) {
+    public HttpResponse<Void> handle(final HttpRequest<?> request) {
         final var webhookHeader = getWebhookHeader();
 
         final var eventType = request.getHeaders().get(webhookHeader.getHeaderEventKey());
@@ -61,7 +62,7 @@ class WebhookHandler {
         return HttpResponse.accepted();
     }
 
-    private GitProperties.Webhook.WebhookHeader getWebhookHeader() {
+    private WebhookHeader getWebhookHeader() {
         return switch (gitProperties.getWebhook().getType()) {
             case GITHUB -> GITHUB_WEBHOOK_HEADER;
             case BITBUCKET -> BITBUCKET_WEBHOOK_HEADER;

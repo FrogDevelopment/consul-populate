@@ -1,4 +1,4 @@
-package com.frogdevelopment.consul.populate.git;
+package com.frogdevelopment.consul.populate.git.events;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +8,8 @@ import java.io.IOException;
 import jakarta.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
+
+import com.frogdevelopment.consul.populate.git.RepositoryDirectoryProvider;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Blocking;
@@ -29,7 +31,7 @@ import io.micronaut.runtime.server.event.ServerShutdownEvent;
 public class GitCleanUp {
 
     /** Provides the cloned git repository directory path */
-    private final RepositoryDirectoryProvider  repositoryDirectoryProvider;
+    private final RepositoryDirectoryProvider repositoryDirectoryProvider;
 
     /**
      * Deletes the cloned git repository directory on server shutdown.

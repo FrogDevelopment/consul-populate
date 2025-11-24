@@ -1,6 +1,8 @@
-package com.frogdevelopment.consul.populate.git.endpoint;
+package com.frogdevelopment.consul.populate.git.endpoint.model;
 
 import com.frogdevelopment.consul.populate.files.ImportFileProperties;
+import com.frogdevelopment.consul.populate.git.pull.Origin;
+import com.frogdevelopment.consul.populate.git.pull.Status;
 
 /**
  * Lightweight summary of the current Git populator state for the management endpoint.
@@ -40,9 +42,10 @@ public record GitSummary(
     public record Polling(
             boolean enabled,
             String delay,
+            Origin origin,
             String lastPullTime,
             String lastPullDuration,
-            String lastPullOutcome
+            Status lastPullOutcome
     ) {
     }
 }

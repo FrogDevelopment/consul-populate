@@ -3,6 +3,12 @@ package com.frogdevelopment.consul.populate.git.endpoint;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.frogdevelopment.consul.populate.git.endpoint.handlers.PollingHandler;
+import com.frogdevelopment.consul.populate.git.endpoint.handlers.PullHandler;
+import com.frogdevelopment.consul.populate.git.endpoint.handlers.WebhookHandler;
+import com.frogdevelopment.consul.populate.git.endpoint.model.GitSummary;
+import com.frogdevelopment.consul.populate.git.endpoint.model.GitSummaryProvider;
+
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
