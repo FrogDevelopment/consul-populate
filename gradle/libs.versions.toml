@@ -1,5 +1,5 @@
 [versions]
-commons-io = "2.20.0"
+commons-io = "2.21.0"
 jetbrains = "26.0.2-1"
 systemlambda = "1.2.1"
 testcontainers = "1.21.3"
