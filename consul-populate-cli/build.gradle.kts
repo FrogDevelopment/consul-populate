@@ -18,7 +18,7 @@ dependencies {
     annotationProcessor(mn.lombok)
     annotationProcessor(mn.picocli.codegen)
 
-    implementation(mn.picocli.asProvider())
+    implementation(mn.picocli)
     implementation(mn.micronaut.picocli)
     implementation(projects.consulPopulateCore)
 
@@ -61,8 +61,21 @@ tasks {
         enabled = false
     }
 
+    distZip {
+        enabled = false
+    }
+
+    distTar {
+        enabled = false
+    }
+
     shadowJar {
         minimize()
+        archiveClassifier = ""
+    }
+
+    startScripts {
+        dependsOn(shadowJar)
     }
 
     test {
