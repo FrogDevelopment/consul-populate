@@ -47,6 +47,8 @@ publishing {
     publications {
         named<MavenPublication>("mavenJava") {
             from(components["shadow"])
+            artifact(tasks.javadocJar)
+            artifact(tasks.sourcesJar)
 
             pom {
                 name = "Consul Populate - CLI"
@@ -61,25 +63,9 @@ tasks {
         enabled = false
     }
 
-    distZip {
-        enabled = false
-    }
-
-    distTar {
-        enabled = false
-    }
-
     shadowJar {
         minimize()
         archiveClassifier = ""
-    }
-
-    startScripts {
-        dependsOn(shadowJar)
-    }
-
-    publish {
-        dependsOn(assemble)
     }
 
     test {
