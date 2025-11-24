@@ -1,10 +1,13 @@
 package com.frogdevelopment.consul.populate.git;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Optional;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -27,34 +30,54 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 @ConfigurationProperties("consul.git")
 public class GitProperties {
 
-    /** Git repository URI (e.g., https://github.com/user/repo.git) */
+    /**
+     * Git repository URI (e.g., https://github.com/user/repo.git)
+     */
     @NotBlank
     private String uri;
 
-    /** Personal access token for authentication (preferred over username/password) */
+    /**
+     * Personal access token for authentication (preferred over username/password)
+     */
 //    @NotBlank
     private String token;
 
-    /** Username for basic authentication */
+    /**
+     * Username for basic authentication
+     */
     private String username;
 
-    /** Password for basic authentication */
+    /**
+     * Password for basic authentication
+     */
     private String password;
 
-    /** Branch to clone and track (default: "main") */
+    /**
+     * Branch to clone and track (default: "main")
+     */
     @NotBlank
     private String branch = "main";
 
-    /** Local directory path where the repository will be cloned (default: /tmp) */
+    /**
+     * Local directory path where the repository will be cloned (default: /tmp)
+     */
     private Path localPath = Path.of("/tmp");
 
-    /** Whether to verify SSL certificates (default: true). Set to false for self-signed certificates */
+    /**
+     * Whether to verify SSL certificates (default: true). Set to false for self-signed certificates
+     */
     private boolean sslVerify = true;
 
-    /** Polling configuration for detecting repository changes */
+    /**
+     * Polling configuration for detecting repository changes
+     */
     private Polling polling = new Polling();
 
-    /** File import settings (format, target, rootPath) */
+    private Webhook webhook = new Webhook();
+
+    /**
+     * File import settings (format, target, rootPath)
+     */
     @ConfigurationBuilder(configurationPrefix = "files")
     private ImportFileProperties fileProperties = new ImportFileProperties();
 
@@ -66,12 +89,48 @@ public class GitProperties {
     @ConfigurationProperties("polling")
     public static class Polling {
 
-        /** Whether to enable polling for repository changes (default: false) */
+        /**
+         * Whether to enable polling for repository changes (default: false)
+         */
         private boolean enabled = false;
 
-        /** Delay between polling attempts (default: 5 minutes) */
+        /**
+         * Delay between polling attempts (default: 5 minutes)
+         */
         @NotNull
         private Duration delay = Duration.ofMinutes(5);
 
+    }
+
+    @Data
+    @ConfigurationProperties("webhook")
+    public static class Webhook {
+
+        @NotNull
+        private GitType type = GitType.GITHUB;
+
+        @Nullable
+        private WebhookHeader header;
+
+        private Optional<String> secret = Optional.empty();
+
+        @Data
+        @AllArgsConstructor
+        @ConfigurationProperties("header")
+        public static class WebhookHeader {
+
+            @NotBlank
+            private String headerEventKey;
+            @NotBlank
+            private String headerEventExpectedValue;
+            @NotBlank
+            private String headerSignatureKey;
+        }
+
+        public enum GitType {
+            GITHUB,
+            BITBUCKET,
+            CUSTOM
+        }
     }
 }
