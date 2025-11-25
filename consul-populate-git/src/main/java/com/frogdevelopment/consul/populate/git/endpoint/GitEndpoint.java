@@ -1,5 +1,7 @@
 package com.frogdevelopment.consul.populate.git.endpoint;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.http.annotation.Body;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,6 +19,8 @@ import io.micronaut.management.endpoint.annotation.Endpoint;
 import io.micronaut.management.endpoint.annotation.Read;
 import io.micronaut.management.endpoint.annotation.Selector;
 import io.micronaut.management.endpoint.annotation.Write;
+
+import java.util.Map;
 
 @Slf4j
 @Endpoint(value = "git", defaultSensitive = false)
@@ -36,10 +40,11 @@ public class GitEndpoint {
     @Write
     @Status(HttpStatus.OK)
     public HttpResponse<Void> handleGitActions(@Selector final String action,
-                                               final HttpRequest<?> request) {
+                                               final HttpRequest<?> request,
+                                               @Body @Nullable String body) {
         return switch (action) {
             case "polling" -> pollingHandler.handle(request);
-            case "webhook" -> webhookHandler.handle(request);
+            case "webhook" -> webhookHandler.handle(request, body);
             case "pull" -> pullHandler.handle();
             default -> {
                 log.warn("Invalid action {}", action);

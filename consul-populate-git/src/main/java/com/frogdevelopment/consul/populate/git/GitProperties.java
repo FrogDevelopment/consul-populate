@@ -73,7 +73,8 @@ public class GitProperties {
      */
     private Polling polling = new Polling();
 
-    private Webhook webhook = new Webhook();
+    @Nullable
+    private Webhook webhook;
 
     /**
      * File import settings (format, target, rootPath)

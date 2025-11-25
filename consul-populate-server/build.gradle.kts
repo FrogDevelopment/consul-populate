@@ -13,9 +13,12 @@ micronaut {
 }
 
 dependencies {
-    implementation(projects.consulPopulateGit)
+    annotationProcessor(mn.lombok)
 
+    implementation(projects.consulPopulateGit)
     implementation(mn.micronaut.management)
+
+    compileOnly(mn.lombok)
 
     runtimeOnly(mn.logback.classic)
     runtimeOnly(mn.snakeyaml)

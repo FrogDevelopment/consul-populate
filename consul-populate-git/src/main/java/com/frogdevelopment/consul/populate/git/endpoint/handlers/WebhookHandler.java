@@ -1,5 +1,11 @@
 package com.frogdevelopment.consul.populate.git.endpoint.handlers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.frogdevelopment.consul.populate.git.pull.GitPull;
+import io.micronaut.core.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -8,6 +14,10 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -20,6 +30,9 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 
+import static com.frogdevelopment.consul.populate.git.pull.Origin.FORCED;
+import static com.frogdevelopment.consul.populate.git.pull.Origin.WEBHOOK;
+
 // todo: save informations like last date webhook triggered, to be included in the GitSummary
 @Slf4j
 @Singleton
@@ -30,8 +43,10 @@ public class WebhookHandler {
     private static final WebhookHeader BITBUCKET_WEBHOOK_HEADER = new WebhookHeader("X-Event-Key", "repo:push", "X-Hub-Signature");
 
     private final GitProperties gitProperties;
+    private final ObjectMapper objectMapper;
+    private final GitPull gitPull;
 
-    public HttpResponse<Void> handle(final HttpRequest<?> request) {
+    public HttpResponse<Void> handle(final HttpRequest<?> request, String body) {
         final var webhookHeader = getWebhookHeader();
 
         final var eventType = request.getHeaders().get(webhookHeader.getHeaderEventKey());
@@ -39,11 +54,9 @@ public class WebhookHandler {
             return HttpResponse.notModified();
         }
 
-        final var optionalBody = request.getBody(String.class);
-        if (optionalBody.isEmpty()) {
+        if (body == null) {
             return HttpResponse.badRequest();
         }
-        final var payload = optionalBody.get();
 
         if (gitProperties.getWebhook().getSecret().isPresent()) {
             final var signature = request.getHeaders().get(webhookHeader.getHeaderSignatureKey());
@@ -52,11 +65,11 @@ public class WebhookHandler {
             }
 
             final var secret = gitProperties.getWebhook().getSecret().get();
-            if (verifySignature(signature, payload, secret)) {
-                triggerPullingIfNeeded(request);
+            if (verifySignature(signature, body, secret)) {
+                triggerPullingIfNeeded(body);
             }
         } else {
-            triggerPullingIfNeeded(request);
+            triggerPullingIfNeeded(body);
         }
 
         return HttpResponse.accepted();
@@ -98,9 +111,38 @@ public class WebhookHandler {
         }
     }
 
-    private void triggerPullingIfNeeded(final HttpRequest<?> request) {
+    private void triggerPullingIfNeeded(final String body) {
         // GITHUB https://docs.github.com/en/webhooks/webhook-events-and-payloads
         // BITBUCKET https://support.atlassian.com/bitbucket-cloud/docs/event-payloads/#Push
         // todo check that a push was one in the branch configured in GitProperties
+        try {
+            final JsonNode jsonNode = objectMapper.readTree(body);
+            final Optional<String> branchName = switch (gitProperties.getWebhook().getType()) {
+                case GITHUB -> Optional.of(jsonNode.get("ref").asText());
+                case BITBUCKET -> {
+                    final var changes = jsonNode.get("push").withArrayProperty("changes").elements();
+                    while (changes.hasNext()) {
+                        final var next = changes.next();
+                        if (next.has("new")) {
+                            yield Optional.of(next.get("new").get("name").asText());
+                        }
+                    }
+                    yield Optional.empty();
+                }
+                case CUSTOM -> Optional.empty();
+            };
+
+            branchName
+                    .map(v -> v.replace("refs/heads/", "")) // fixme
+                    .ifPresent(branch -> {
+                        if (branch.equals(gitProperties.getBranch())) {
+                            log.info("{} Webhook triggered for branchName: {}", gitProperties.getWebhook().getType(), branch);
+                            gitPull.pull(WEBHOOK);
+                        }
+                    });
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
