@@ -21,6 +21,7 @@ publishing {
             }
 
             pom {
+                version = rootProject.version as String?
                 description = project.description
                 url = "https://github.com/FrogDevelopment/consul-populate/wiki"
                 inceptionYear = "2024"
