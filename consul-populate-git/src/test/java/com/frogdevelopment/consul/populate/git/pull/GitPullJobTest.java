@@ -1,5 +1,6 @@
 package com.frogdevelopment.consul.populate.git.pull;
 
+import static com.frogdevelopment.consul.populate.git.pull.Trigger.SCHEDULED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,12 +13,16 @@ import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.events.IndexChangedEvent;
+import org.eclipse.jgit.events.IndexChangedListener;
 import org.eclipse.jgit.events.ListenerList;
 import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,6 +51,13 @@ class GitPullJobTest {
     private GitPull gitPull;
     @Mock
     private ScheduledFuture<?> scheduledFuture;
+    @Mock
+    private IndexChangedEvent indexChangedEvent;
+
+    @Captor
+    private ArgumentCaptor<IndexChangedListener> indexChangedListenerCaptor;
+    @Captor
+    private ArgumentCaptor<Runnable> runnableCaptor;
 
     @InjectMocks
     private GitPullJob gitPullJob;
@@ -94,6 +106,73 @@ class GitPullJobTest {
 
             // then
             then(taskScheduler).should(times(2)).scheduleWithFixedDelay(any(), any(), any(Runnable.class));
+        }
+
+        @Test
+        void start_shouldRegisterIndexChangedListener_thatTriggersPopulate() {
+            // when
+            gitPullJob.start();
+
+            // then
+            then(listenerList).should().addIndexChangedListener(indexChangedListenerCaptor.capture());
+
+            // when - simulate index change event
+            indexChangedListenerCaptor.getValue().onIndexChanged(indexChangedEvent);
+
+            // then
+            then(populateService).should().populate();
+        }
+
+        @Test
+        void start_shouldResetStoppingFlag_whenRestartingAfterStop() {
+            // given
+            given(scheduledFuture.isDone()).willReturn(false, true, false);
+            gitPullJob.start();
+            gitPullJob.stop();
+            assertThat(gitPullJob.isRunning()).isFalse();
+
+            // when - restart
+            gitPullJob.start();
+
+            // then - should be running again
+            assertThat(gitPullJob.isRunning()).isTrue();
+        }
+    }
+
+    @Nested
+    class Pull {
+
+        @BeforeEach
+        void setUp() {
+            given(git.getRepository()).willReturn(repository);
+            given(repository.getListenerList()).willReturn(listenerList);
+            given(gitProperties.getPollInterval()).willReturn(Duration.ofMinutes(5));
+            willReturn(scheduledFuture).given(taskScheduler).scheduleWithFixedDelay(any(), any(), runnableCaptor.capture());
+        }
+
+        @Test
+        void pull_shouldCallGitPull_whenNotStopping() {
+            // given
+            gitPullJob.start();
+
+            // when - execute the scheduled task
+            runnableCaptor.getValue().run();
+
+            // then
+            then(gitPull).should().pull(SCHEDULED);
+        }
+
+        @Test
+        void pull_shouldSkipGitPull_whenStopping() {
+            // given
+            gitPullJob.start();
+            gitPullJob.stop();
+
+            // when - execute the scheduled task
+            runnableCaptor.getValue().run();
+
+            // then
+            then(gitPull).shouldHaveNoInteractions();
         }
     }
 
