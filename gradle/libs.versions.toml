@@ -1,5 +1,6 @@
 [versions]
 commons-io = "2.20.0"
+commons-lang3 = "3.18.0"
 jetbrains = "26.0.2-1"
 systemlambda = "1.2.1"
 testcontainers = "1.21.3"
@@ -11,6 +12,7 @@ plugin-shadow = "9.2.2"
 
 [libraries]
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains" }
 systemlambda = { module = "com.github.stefanbirkner:system-lambda", version.ref = "systemlambda" }
 testcontainers-core = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
