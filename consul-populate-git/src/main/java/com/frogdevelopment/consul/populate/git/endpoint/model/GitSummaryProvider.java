@@ -101,7 +101,6 @@ public class GitSummaryProvider {
                 maskedUri,
                 gitProperties.getBranch(),
                 repositoryDirectoryProvider.getRepository().toString(),
-                gitProperties.isSslVerify(),
                 dirty,
                 head
         );

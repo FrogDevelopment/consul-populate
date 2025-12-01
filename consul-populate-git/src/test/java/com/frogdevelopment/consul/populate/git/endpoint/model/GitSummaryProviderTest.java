@@ -53,7 +53,6 @@ class GitSummaryProviderTest {
             given(gitProperties.getFileProperties()).willReturn(fileProperties);
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.isPollEnabled()).willReturn(false);
 
@@ -79,7 +78,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.isPollEnabled()).willReturn(false);
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
@@ -101,7 +99,6 @@ class GitSummaryProviderTest {
             assertThat(result.repo().uri()).isEqualTo("https://github.com/user/repo.git");
             assertThat(result.repo().branch()).isEqualTo("main");
             assertThat(result.repo().localPath()).isEqualTo("/tmp/repo");
-            assertThat(result.repo().sslVerify()).isTrue();
         }
 
         @Test
@@ -109,7 +106,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://user:password@github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.isPollEnabled()).willReturn(false);
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
@@ -136,7 +132,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.isPollEnabled()).willReturn(false);
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
@@ -163,7 +158,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.isPollEnabled()).willReturn(false);
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
@@ -192,7 +186,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.isPollEnabled()).willReturn(false);
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
@@ -219,7 +212,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.isPollEnabled()).willReturn(false);
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
@@ -239,7 +231,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://username@github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.isPollEnabled()).willReturn(false);
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
@@ -260,33 +251,6 @@ class GitSummaryProviderTest {
             // then
             assertThat(result.repo().uri()).isEqualTo("https://github.com/user/repo.git");
         }
-
-        @Test
-        void shouldReturnSslVerifyFalse_whenDisabled() throws Exception {
-            // given
-            given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
-            given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(false);
-            given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
-            given(gitProperties.isPollEnabled()).willReturn(false);
-            given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
-
-            var repository = mock(Repository.class);
-            given(git.getRepository()).willReturn(repository);
-            given(repository.resolve("HEAD")).willReturn(null);
-
-            var statusCommand = mock(StatusCommand.class);
-            var status = mock(Status.class);
-            given(git.status()).willReturn(statusCommand);
-            given(statusCommand.call()).willReturn(status);
-            given(status.isClean()).willReturn(true);
-
-            // when
-            var result = gitSummaryProvider.generateSummary();
-
-            // then
-            assertThat(result.repo().sslVerify()).isFalse();
-        }
     }
 
     @Nested
@@ -297,7 +261,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
 
@@ -335,7 +298,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
 
@@ -365,7 +327,6 @@ class GitSummaryProviderTest {
             // given
             given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
             given(gitProperties.getBranch()).willReturn("main");
-            given(gitProperties.isSslVerify()).willReturn(true);
             given(repositoryDirectoryProvider.getRepository()).willReturn(Path.of("/tmp/repo"));
             given(gitProperties.getFileProperties()).willReturn(new ImportFileProperties());
 

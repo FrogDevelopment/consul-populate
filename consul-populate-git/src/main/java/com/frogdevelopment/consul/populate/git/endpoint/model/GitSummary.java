@@ -24,7 +24,6 @@ public record GitSummary(
      * @param uri       the repository URI (with credentials masked)
      * @param branch    the tracked branch name
      * @param localPath the local directory path where the repository is cloned
-     * @param sslVerify whether SSL verification is enabled
      * @param dirty     whether the working directory has uncommitted changes
      * @param head      the current HEAD commit information, or null if unavailable
      */
@@ -32,7 +31,6 @@ public record GitSummary(
             String uri,
             String branch,
             String localPath,
-            boolean sslVerify,
             boolean dirty,
             Head head
     ) {

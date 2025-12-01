@@ -61,11 +61,6 @@ public class GitProperties {
     private Path localPath = Path.of("/tmp");
 
     /**
-     * Whether to verify SSL certificates (default: true). Set to false for self-signed certificates
-     */
-    private boolean sslVerify = true;
-
-    /**
      * Webhook configuration for receiving push events from git providers (optional)
      */
     @Nullable

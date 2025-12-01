@@ -24,7 +24,7 @@ dependencies {
     implementation(projects.consulPopulateCore)
     implementation(libs.jgit)
     implementation(libs.commons.io)
-    implementation("org.apache.commons:commons-lang3:3.18.0")
+    implementation(libs.commons.lang3)
 
     compileOnly(mn.lombok)
 
