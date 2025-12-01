@@ -23,7 +23,7 @@ sonar {
     properties {
         property("sonar.projectKey", "FrogDevelopment_consul-populate")
         property("sonar.organization", "frogdevelopment")
-        property("sonar.junit.reportPaths", "build/test-results/test/")
+        property("sonar.junit.reportPaths", "**/build/test-results/test/")
     }
 }
 
