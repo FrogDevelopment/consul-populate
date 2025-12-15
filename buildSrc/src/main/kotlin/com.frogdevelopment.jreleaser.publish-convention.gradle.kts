@@ -21,6 +21,7 @@ publishing {
             }
 
             pom {
+                groupId = "com.frog-development.consul-populate"
                 version = rootProject.version as String?
                 description = project.description
                 url = "https://github.com/FrogDevelopment/consul-populate/wiki"
