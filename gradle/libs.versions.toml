@@ -7,7 +7,7 @@ testcontainers = "1.21.3"
 vertx = "5.0.5"
 jgit = "7.4.0.202509020913-r"
 
-plugin-jib = "3.5.1"
+plugin-jib = "3.5.2"
 plugin-shadow = "9.3.0"
 
 [libraries]
