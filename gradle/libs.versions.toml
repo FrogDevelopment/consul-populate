@@ -3,7 +3,7 @@ commons-io = "2.21.0"
 jetbrains = "26.0.2-1"
 systemlambda = "1.2.1"
 testcontainers = "1.21.3"
-vertx = "5.0.5"
+vertx = "5.0.6"
 
 plugin-jib = "3.5.1"
 plugin-shadow = "9.3.0"
