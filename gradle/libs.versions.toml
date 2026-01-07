@@ -8,7 +8,7 @@ vertx = "5.0.5"
 jgit = "7.4.0.202509020913-r"
 
 plugin-jib = "3.5.2"
-plugin-shadow = "9.3.0"
+plugin-shadow = "9.3.1"
 
 [libraries]
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
