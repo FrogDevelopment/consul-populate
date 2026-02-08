@@ -3,6 +3,7 @@ package com.frogdevelopment.consul.populate.files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,9 +11,6 @@ import java.util.Properties;
 import java.util.SequencedMap;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Singleton;
-
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
@@ -23,8 +21,6 @@ import io.micronaut.core.annotation.Nullable;
  * @see Properties
  * @since 1.0.0
  */
-@Singleton
-@Requires(property = "consul.files.format", value = "PROPERTIES")
 public final class PropertiesFilesImporter extends FilesImporter {
 
     private static final List<String> EXTENSIONS = List.of("properties");
@@ -32,10 +28,11 @@ public final class PropertiesFilesImporter extends FilesImporter {
     /**
      * Constructor
      *
-     * @param importProperties Properties for the import
+     * @param rootPath     Path to root directory
+     * @param targetPath   Subdirectory used to override root configurations
      */
-    public PropertiesFilesImporter(final ImportFileProperties importProperties) {
-        super(importProperties);
+    public PropertiesFilesImporter(final Path rootPath, final Path targetPath) {
+        super(rootPath, targetPath);
     }
 
     @Override

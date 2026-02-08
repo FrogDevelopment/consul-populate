@@ -1,6 +1,7 @@
 plugins {
     id("io.micronaut.minimal.library") version "4.6.1"
     id("com.frogdevelopment.jreleaser.publish-convention")
+    id("com.frogdevelopment.jacoco")
 }
 
 micronaut {
@@ -17,7 +18,7 @@ dependencies {
     annotationProcessor(mn.micronaut.validation.processor)
 
     implementation(mn.micronaut.jackson.databind)
-    implementation(mn.micronaut.validation.asProvider())
+    implementation(mn.micronaut.validation)
     implementation(libs.vertx.consul)
     implementation(libs.commons.io)
     implementation(mn.snakeyaml)

@@ -3,18 +3,16 @@ package com.frogdevelopment.consul.populate.files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SequencedMap;
 
-import jakarta.inject.Singleton;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 
@@ -25,8 +23,6 @@ import io.micronaut.core.annotation.Nullable;
  * @see ObjectMapper
  * @since 1.0.0
  */
-@Singleton
-@Requires(property = "consul.files.format", value = "JSON")
 public final class JsonFilesImporter extends FilesImporter {
 
     private static final List<String> EXTENSIONS = List.of("json");
@@ -36,11 +32,12 @@ public final class JsonFilesImporter extends FilesImporter {
     /**
      * Constructor
      *
-     * @param importProperties Properties for the import
-     * @param objectMapper     ObjectMapper instance used for Json I/O
+     * @param rootPath     Path to root directory
+     * @param targetPath   Subdirectory used to override root configurations
+     * @param objectMapper ObjectMapper instance used for Json I/O
      */
-    public JsonFilesImporter(final ImportFileProperties importProperties, final ObjectMapper objectMapper) {
-        super(importProperties);
+    public JsonFilesImporter(final Path rootPath, final Path targetPath, final ObjectMapper objectMapper) {
+        super(rootPath, targetPath);
         this.objectMapper = objectMapper;
     }
 
