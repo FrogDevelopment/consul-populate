@@ -11,5 +11,5 @@ include(
     "consul-populate-cli",
     "consul-populate-core",
     "consul-populate-git",
-    "consul-populate-server"
+//    "consul-populate-server" for local tests, todo to improve
 )
