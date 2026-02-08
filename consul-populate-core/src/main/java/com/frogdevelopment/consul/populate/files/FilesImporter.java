@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SequencedMap;
@@ -27,37 +26,42 @@ import io.micronaut.core.util.ArrayUtils;
  * @since 1.0.0
  */
 @RequiredArgsConstructor
-abstract sealed class FilesImporter implements DataImporter
+public abstract sealed class FilesImporter implements DataImporter
         permits JsonFilesImporter, PropertiesFilesImporter, YamlFilesImporter {
 
     private static final Logger log = LoggerFactory.getLogger(FilesImporter.class);
-    private final ImportFileProperties importProperties;
+
+    private final Path rootPath;
+    private final Path targetPath;
 
     @NonNull
     @Override
     public Map<String, String> execute() {
         // validate paths
-        final var rootPath = Paths.get(importProperties.getRootPath());
         if (!rootPath.toFile().exists()) {
             throw new IllegalArgumentException("Root directory does not exist: " + rootPath);
         }
-        final var targetPath = rootPath.resolve(importProperties.getTarget());
         if (!targetPath.toFile().exists()) {
             throw new IllegalArgumentException("Target directory does not exist: " + targetPath);
         }
 
         // list files in root directory
-        final var rootFiles = getRootFiles(rootPath);
+        final var rootFiles = readFiles(rootPath);
 
-        // list files in target subdirectory
-        final var targetFiles = getTargetFiles(targetPath);
+        final Map<String, SequencedMap<String, Object>> finalFiles;
+        if (rootPath.equals(targetPath)) {
+            finalFiles = rootFiles;
+        } else {
+            // list files in target subdirectory
+            final var targetFiles = readFiles(targetPath);
 
-        // for each target, merge in root if exists
-        final var merged = MapHelper.merge(rootFiles, targetFiles);
+            // for each target, merge in root if exists
+            finalFiles = MapHelper.merge(rootFiles, targetFiles);
+        }
 
         try {
             final var result = new HashMap<String, String>();
-            for (final var entry : merged.entrySet()) {
+            for (final var entry : finalFiles.entrySet()) {
                 final var key = FilenameUtils.removeExtension(entry.getKey());
                 final var value = writeValueAsString(entry.getValue());
                 if (value.isEmpty()) {
@@ -73,40 +77,24 @@ abstract sealed class FilesImporter implements DataImporter
         }
     }
 
-    private Map<String, SequencedMap<String, Object>> getRootFiles(final Path rootPath) {
+    private Map<String, SequencedMap<String, Object>> readFiles(final Path path) {
         try {
-            final var rootFiles = rootPath.toFile().listFiles(this::filterFile);
-            if (ArrayUtils.isEmpty(rootFiles)) {
-                throw new IllegalArgumentException("No configuration files found in root directory: " + rootPath);
+            final var files = path.toFile().listFiles(this::filterFile);
+            if (ArrayUtils.isEmpty(files)) {
+                throw new IllegalArgumentException("No configuration files found in directory: " + path);
             }
-            final var rootFilesMap = new HashMap<String, SequencedMap<String, Object>>();
-            for (final var rootFile : rootFiles) {
-                rootFilesMap.put(rootFile.getName(), readFile(rootFile));
-            }
-            return rootFilesMap;
-        } catch (final IOException e) {
-            throw new IllegalStateException("Unable to read the root configuration. Please check the error logs", e);
-        }
-    }
-
-    private Map<String, SequencedMap<String, Object>> getTargetFiles(final Path targetPath) {
-        try {
-            final var targetFiles = targetPath.toFile().listFiles(this::filterFile);
-            if (ArrayUtils.isEmpty(targetFiles)) {
-                throw new IllegalArgumentException("No configuration files found in target directory: " + targetPath);
-            }
-            final var targetFilesMap = new HashMap<String, SequencedMap<String, Object>>();
-            for (final var targetFile : targetFiles) {
-                final var target = readFile(targetFile);
-                if (target == null) {
-                    log.warn("Content is null for file: {}", targetFile.getAbsolutePath());
+            final var dataMap = new HashMap<String, SequencedMap<String, Object>>();
+            for (final var file : files) {
+                final var data = readFile(file);
+                if (data == null) {
+                    log.warn("Content is null for file: {}", file.getAbsolutePath());
                     continue;
                 }
-                targetFilesMap.put(targetFile.getName(), target);
+                dataMap.put(file.getName(), data);
             }
-            return targetFilesMap;
+            return dataMap;
         } catch (final IOException e) {
-            throw new IllegalStateException("Unable to read the target configurations. Please check the error logs", e);
+            throw new IllegalStateException("Unable to read the configurations. Please check the error logs", e);
         }
     }
 
