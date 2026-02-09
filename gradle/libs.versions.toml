@@ -1,6 +1,6 @@
 [versions]
 commons-io = "2.21.0"
-commons-lang3 = "3.18.0"
+commons-lang3 = "3.20.0"
 jetbrains = "26.0.2-1"
 systemlambda = "1.2.1"
 testcontainers = "1.21.4"
