@@ -4,7 +4,7 @@ commons-lang3 = "3.20.0"
 jetbrains = "26.1.0"
 systemlambda = "1.2.1"
 testcontainers = "1.21.4"
-vertx = "5.0.7"
+vertx = "5.0.12"
 jgit = "7.6.0.202603022253-r"
 
 plugin-jib = "3.5.3"
