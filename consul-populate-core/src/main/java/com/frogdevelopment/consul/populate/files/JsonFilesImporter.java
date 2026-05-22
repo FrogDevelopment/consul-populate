@@ -59,7 +59,7 @@ public final class JsonFilesImporter extends FilesImporter {
     @NonNull
     @Override
     protected String writeValueAsString(@NonNull final Map<String, Object> map) throws JsonProcessingException {
-        if (map == null || map.isEmpty()) {
+        if (map.isEmpty()) {
             return "";
         }
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);

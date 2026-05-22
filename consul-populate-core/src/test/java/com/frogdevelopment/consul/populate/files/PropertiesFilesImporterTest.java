@@ -27,7 +27,7 @@ class PropertiesFilesImporterTest extends BaseFilesImporterTest {
             very.deep.nested.field.that.will.but.not=here""";
 
     @Inject
-    private PropertiesFilesImporter filesImporter;
+    private FilesImporter filesImporter;
 
     @ParameterizedTest
     @CsvSource({

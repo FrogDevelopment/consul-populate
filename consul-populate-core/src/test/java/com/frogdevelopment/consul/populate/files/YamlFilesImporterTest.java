@@ -43,7 +43,7 @@ class YamlFilesImporterTest extends BaseFilesImporterTest {
             """;
 
     @Inject
-    private YamlFilesImporter filesImporter;
+    private FilesImporter filesImporter;
 
     @ParameterizedTest
     @CsvSource({
@@ -74,8 +74,7 @@ class YamlFilesImporterTest extends BaseFilesImporterTest {
     }
 
     @Test
-    void should_handle_empty() {
-        // given
+    void should_handle_empty() throws Exception {
         // when
         final var value = filesImporter.writeValueAsString(new TreeMap<>());
 

@@ -53,7 +53,7 @@ class JsonFilesImporterTest extends BaseFilesImporterTest {
             }""";
 
     @Inject
-    private JsonFilesImporter filesImporter;
+    private FilesImporter filesImporter;
 
     @ParameterizedTest
     @CsvSource({
@@ -82,8 +82,7 @@ class JsonFilesImporterTest extends BaseFilesImporterTest {
     }
 
     @Test
-    void should_handle_empty() throws JsonProcessingException {
-        // given
+    void should_handle_empty() throws Exception {
         // when
         final var value = filesImporter.writeValueAsString(new TreeMap<>());
 
