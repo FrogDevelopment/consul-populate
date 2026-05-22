@@ -2,6 +2,7 @@ package com.frogdevelopment.consul.populate.files;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -54,13 +55,18 @@ public final class PropertiesFilesImporter extends FilesImporter {
 
     @NonNull
     @Override
-    protected String writeValueAsString(@NonNull final Map<String, Object> map) {
-        if (map == null || map.isEmpty()) {
+    protected String writeValueAsString(@NonNull final Map<String, Object> map) throws IOException {
+        if (map.isEmpty()) {
             return "";
         }
-        return map.entrySet()
-                .stream()
-                .map(entry -> entry.getKey() + "=" + entry.getValue())
-                .collect(Collectors.joining("\n"));
+        final var properties = new Properties();
+        map.forEach((k, v) -> properties.setProperty(k, v.toString()));
+        final var sw = new StringWriter();
+        properties.store(sw, null);
+        // Properties.store() prepends a "#<timestamp>" comment line and a blank line — strip both
+        return sw.toString().lines()
+                .filter(line -> !line.startsWith("#"))
+                .collect(Collectors.joining("\n"))
+                .strip();
     }
 }

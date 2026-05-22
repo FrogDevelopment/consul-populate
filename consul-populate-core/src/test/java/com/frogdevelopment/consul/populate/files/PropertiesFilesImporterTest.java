@@ -19,12 +19,12 @@ class PropertiesFilesImporterTest extends BaseFilesImporterTest {
     @Language("PROPERTIES")
     private static final String EXPECTED = """
             collection.items=item_C
-            very.deep.nested.field.that.will.but.not=here
-            very.deep.nested.field.that.will.be.overridden=salut
             foo.bar=new_value
             foo.baz=to_keep
             simple-value=kept
-            something.new=true""";
+            something.new=true
+            very.deep.nested.field.that.will.be.overridden=salut
+            very.deep.nested.field.that.will.but.not=here""";
 
     @Inject
     private PropertiesFilesImporter filesImporter;
@@ -56,8 +56,7 @@ class PropertiesFilesImporterTest extends BaseFilesImporterTest {
     }
 
     @Test
-    void should_handle_empty() {
-        // given
+    void should_handle_empty() throws Exception {
         // when
         final var value = filesImporter.writeValueAsString(new TreeMap<>());
 
