@@ -52,7 +52,7 @@ public final class YamlFilesImporter extends FilesImporter {
     @NonNull
     @Override
     protected String writeValueAsString(@NonNull final Map<String, Object> map) {
-        if (map == null || map.isEmpty()) {
+        if (map.isEmpty()) {
             return "";
         }
         return yaml.get().dumpAsMap(map);

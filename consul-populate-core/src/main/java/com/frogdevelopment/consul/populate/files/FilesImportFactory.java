@@ -4,9 +4,9 @@ import java.nio.file.Paths;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Requires;
+import jakarta.inject.Singleton;
 
 /**
  * Factory handling Files import based on the {@link ImportFileProperties.Format} defined in configuration.
@@ -15,27 +15,14 @@ import io.micronaut.context.annotation.Requires;
 @Requires(property = "consul.files")
 public class FilesImportFactory {
 
-    @Bean
-    @Requires(property = "consul.files.format", value = "JSON")
-    JsonFilesImporter jsonFilesImporter(final ImportFileProperties importFileProperties, final ObjectMapper objectMapper) {
-        final var rootPath = Paths.get(importFileProperties.getRootPath());
-        final var targetPath = rootPath.resolve(importFileProperties.getTarget());
-        return new JsonFilesImporter(rootPath, targetPath, objectMapper);
-    }
-
-    @Bean
-    @Requires(property = "consul.files.format", value = "PROPERTIES")
-    PropertiesFilesImporter propertiesFilesImporter(final ImportFileProperties importFileProperties) {
-        final var rootPath = Paths.get(importFileProperties.getRootPath());
-        final var targetPath = rootPath.resolve(importFileProperties.getTarget());
-        return new PropertiesFilesImporter(rootPath, targetPath);
-    }
-
-    @Bean
-    @Requires(property = "consul.files.format", value = "YAML")
-    YamlFilesImporter yamlFilesImporter(final ImportFileProperties importFileProperties) {
-        final var rootPath = Paths.get(importFileProperties.getRootPath());
-        final var targetPath = rootPath.resolve(importFileProperties.getTarget());
-        return new YamlFilesImporter(rootPath, targetPath);
+    @Singleton
+    FilesImporter filesImporter(final ImportFileProperties properties, final ObjectMapper objectMapper) {
+        final var rootPath = Paths.get(properties.getRootPath());
+        final var targetPath = rootPath.resolve(properties.getTarget());
+        return switch (properties.getFormat()) {
+            case JSON -> new JsonFilesImporter(rootPath, targetPath, objectMapper);
+            case PROPERTIES -> new PropertiesFilesImporter(rootPath, targetPath);
+            case YAML -> new YamlFilesImporter(rootPath, targetPath);
+        };
     }
 }
