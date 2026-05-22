@@ -24,7 +24,7 @@ public final class YamlFilesImporter extends FilesImporter {
 
     private static final List<String> EXTENSIONS = List.of("yaml", "yml");
 
-    private final Yaml yaml = new Yaml();
+    private final ThreadLocal<Yaml> yaml =  ThreadLocal.withInitial(Yaml::new);
 
     /**
      * Constructor
@@ -45,7 +45,7 @@ public final class YamlFilesImporter extends FilesImporter {
     @Override
     protected SequencedMap<String, Object> readFile(@NonNull final File file) throws IOException {
         try (final var reader = Files.newBufferedReader(file.toPath())) {
-            return yaml.load(reader);
+            return yaml.get().load(reader);
         }
     }
 
@@ -55,6 +55,6 @@ public final class YamlFilesImporter extends FilesImporter {
         if (map == null || map.isEmpty()) {
             return "";
         }
-        return yaml.dumpAsMap(map);
+        return yaml.get().dumpAsMap(map);
     }
 }
