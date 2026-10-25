@@ -20,6 +20,7 @@ import io.vertx.ext.consul.ConsulClientOptions;
 public class ConsulFactory {
 
     static final int DEFAULT_HTTP_PORT = 80;
+    static final int DEFAULT_HTTPS_PORT = 443;
 
     @Singleton
     @Bean(preDestroy = "close")
@@ -40,7 +41,8 @@ public class ConsulFactory {
             if (port >= 0) {
                 consulClientOptions.setPort(port);
             } else {
-                consulClientOptions.setPort(DEFAULT_HTTP_PORT); // default port when providing a URI without port
+                // default port when providing a URI without port
+                consulClientOptions.setPort(consulClientOptions.isSsl() ? DEFAULT_HTTPS_PORT : DEFAULT_HTTP_PORT);
             }
         } else {
             consulClientOptions = new ConsulClientOptions()
