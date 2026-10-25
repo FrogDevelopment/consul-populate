@@ -54,8 +54,9 @@ ConsulPopulateCommand (CLI) / GitEndpoint (server)
 
 ### Key design decisions
 
-- **Atomic transactions:** all Consul writes are batched into one `TxnRequest`; deletions included to clean up removed
-  keys. Never partial-update.
+- **Atomic transactions:** Consul writes (SET + DELETE for removed keys) are batched into `TxnRequest`s of at most 64
+  operations (Consul's limit). Each transaction is atomic; above 64 operations atomicity holds per chunk only, and the
+  first failed chunk aborts the run with an exception.
 - **Sealed `FilesImporter`:** restricted to `YamlFilesImporter`, `JsonFilesImporter`, `PropertiesFilesImporter`; new
   formats require adding a permitted subclass.
 - **Async → sync bridge:** `VertxUtils.toBlocking()` wraps Vertx `CompletionStage` for the CLI path. Don't introduce

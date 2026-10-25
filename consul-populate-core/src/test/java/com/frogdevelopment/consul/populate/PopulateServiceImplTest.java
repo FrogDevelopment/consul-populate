@@ -2,6 +2,7 @@ package com.frogdevelopment.consul.populate;
 
 import static com.frogdevelopment.consul.populate.PopulateServiceImpl.MAX_OPERATIONS_PER_TXN;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
@@ -26,6 +27,7 @@ import com.frogdevelopment.consul.populate.config.GlobalProperties;
 
 import io.vertx.core.Future;
 import io.vertx.ext.consul.ConsulClient;
+import io.vertx.ext.consul.TxnError;
 import io.vertx.ext.consul.TxnRequest;
 import io.vertx.ext.consul.TxnResponse;
 
@@ -124,6 +126,25 @@ class PopulateServiceImplTest {
 
         // then
         verify(consulClient, times(0)).transaction(any());
+    }
+
+    @Test
+    void should_stop_and_throw_when_a_transaction_reports_errors() {
+        // given — 65 keys → 2 transactions, the first one fails
+        given(dataImporter.execute()).willReturn(entriesOfSize(65));
+        var txnError = new TxnError().setWhat("boom");
+        given(txnResponse.getErrorsSize()).willReturn(1);
+        given(txnResponse.getErrors()).willReturn(List.of(txnError));
+
+        // when
+        var caught = catchThrowable(() -> populateService.populate());
+
+        // then
+        assertThat(caught)
+                .isExactlyInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Transaction 1/2 failed")
+                .hasMessageContaining("boom");
+        verify(consulClient, times(1)).transaction(any());
     }
 
     private static Map<String, String> entriesOfSize(int count) {
