@@ -17,7 +17,6 @@ import com.frogdevelopment.consul.populate.DataImporter;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.util.ArrayUtils;
 
 /**
  * Base logic when importing data from files
@@ -80,7 +79,10 @@ public abstract sealed class FilesImporter implements DataImporter
     private Map<String, SequencedMap<String, Object>> readFiles(final Path path) {
         try {
             final var files = path.toFile().listFiles(this::filterFile);
-            if (ArrayUtils.isEmpty(files)) {
+            if (files == null) {
+                throw new IllegalArgumentException("Not a directory or unreadable: " + path);
+            }
+            if (files.length == 0) {
                 throw new IllegalArgumentException("No configuration files found in directory: " + path);
             }
             final var dataMap = new HashMap<String, SequencedMap<String, Object>>();
