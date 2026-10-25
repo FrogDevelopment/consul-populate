@@ -74,6 +74,25 @@ class ConsulFactoryTest {
     }
 
     @Test
+    void should_use_https_default_port_when_uri_is_secured_without_port() {
+        // given
+        try(var stub = Mockito.mockStatic(ConsulClient.class)) {
+            stub.when(()-> ConsulClient.create(eq(vertx), consulClientOptionsCaptor.capture()))
+                    .thenReturn(consulClient);
+            given(properties.getUri()).willReturn(Optional.of("https://my-domain"));
+
+            // when
+            consulFactory.consulClient(vertx, properties);
+
+            // then
+            final var consulClientOptions = consulClientOptionsCaptor.getValue();
+            assertThat(consulClientOptions.getHost()).isEqualTo("my-domain");
+            assertThat(consulClientOptions.getPort()).isEqualTo(443);
+            assertThat(consulClientOptions.isSsl()).isTrue();
+        }
+    }
+
+    @Test
     void should_use_host_and_port() {
         // given
         try(var stub = Mockito.mockStatic(ConsulClient.class)) {
