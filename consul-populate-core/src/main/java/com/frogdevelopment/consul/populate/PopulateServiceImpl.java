@@ -69,8 +69,8 @@ class PopulateServiceImpl implements PopulateService {
                 .map(toDeleteOperation())
                 .forEach(operations::add);
 
-        log.info("Exporting data to consul ({} operations in {} transaction(s))",
-                operations.size(), (operations.size() + MAX_OPERATIONS_PER_TXN - 1) / MAX_OPERATIONS_PER_TXN);
+        final var txnCount = (operations.size() + MAX_OPERATIONS_PER_TXN - 1) / MAX_OPERATIONS_PER_TXN;
+        log.info("Exporting data to consul ({} operations in {} transaction(s))", operations.size(), txnCount);
 
         // Consul transactions are limited to MAX_OPERATIONS_PER_TXN operations each
         for (var i = 0; i < operations.size(); i += MAX_OPERATIONS_PER_TXN) {
@@ -79,19 +79,19 @@ class PopulateServiceImpl implements PopulateService {
             chunk.forEach(txnRequest::addOperation);
 
             final var result = toBlocking(consulClient.transaction(txnRequest));
-            log.info("Transaction {}/{} succeeded: {} result(s)",
-                    (i / MAX_OPERATIONS_PER_TXN) + 1,
-                    (operations.size() + MAX_OPERATIONS_PER_TXN - 1) / MAX_OPERATIONS_PER_TXN,
-                    result.getResultsSize());
+            final var txnNumber = (i / MAX_OPERATIONS_PER_TXN) + 1;
             if (result.getErrorsSize() > 0) {
-                log.error("Some operations ({}) lead to error:{}",
+                // each transaction is atomic, but earlier ones are already committed: stop rather than leave more gaps
+                throw new IllegalStateException("Transaction %d/%d failed, %d operation(s) in error:%n\t- %s".formatted(
+                        txnNumber,
+                        txnCount,
                         result.getErrorsSize(),
                         result.getErrors()
                                 .stream()
                                 .map(TxnError::getWhat)
-                                .collect(Collectors.joining("\n\t- "))
-                );
+                                .collect(Collectors.joining("\n\t- "))));
             }
+            log.info("Transaction {}/{} succeeded: {} result(s)", txnNumber, txnCount, result.getResultsSize());
         }
     }
 
