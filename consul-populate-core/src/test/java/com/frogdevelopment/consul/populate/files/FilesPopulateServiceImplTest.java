@@ -26,7 +26,7 @@ import io.vertx.ext.consul.ConsulClient;
 class FilesPopulateServiceImplTest extends BaseFilesImporterTest {
 
     @Container
-    public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.21");
+    public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.22.7");
 
     @Inject
     private PopulateService populateService;

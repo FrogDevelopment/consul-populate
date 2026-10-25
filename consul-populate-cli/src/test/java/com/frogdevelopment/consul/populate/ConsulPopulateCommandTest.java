@@ -26,7 +26,7 @@ import io.vertx.ext.consul.ConsulClientOptions;
 class ConsulPopulateCommandTest {
 
     @Container
-    public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.21");
+    public static final ConsulContainer CONSUL = new ConsulContainer("hashicorp/consul:1.22.7");
 
     private final Vertx vertx = Vertx.vertx();
 

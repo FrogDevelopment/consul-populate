@@ -1,7 +1,7 @@
 services:
 
   consul:
-    image: hashicorp/consul:1.22.0
+    image: hashicorp/consul:1.22.7
     hostname: consul
     ports:
       - "8500:8500"
