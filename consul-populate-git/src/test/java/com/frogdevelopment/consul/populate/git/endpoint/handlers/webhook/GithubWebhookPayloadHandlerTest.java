@@ -40,6 +40,28 @@ class GithubWebhookPayloadHandlerTest {
     }
 
     @Test
+    void extractBranchNames_shouldDefaultToTheSingleBranchOfTheRef() {
+        // given - GitHub sends one ref per event, so the default of the SPI is enough
+        var payload = objectMapper.createObjectNode();
+        payload.put("ref", "refs/heads/main");
+
+        // when
+        var result = handler.extractBranchNames(payload);
+
+        // then
+        assertThat(result).containsExactly("refs/heads/main");
+    }
+
+    @Test
+    void extractBranchNames_shouldBeEmptyWhenRefIsMissing() {
+        // when
+        var result = handler.extractBranchNames(objectMapper.createObjectNode());
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void extractBranchName_shouldReturnEmptyWhenRefIsMissing() {
         // given
         var payload = objectMapper.createObjectNode();

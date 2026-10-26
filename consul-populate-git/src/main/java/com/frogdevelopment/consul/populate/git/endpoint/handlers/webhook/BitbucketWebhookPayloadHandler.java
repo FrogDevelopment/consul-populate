@@ -2,7 +2,9 @@ package com.frogdevelopment.consul.populate.git.endpoint.handlers.webhook;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.inject.Singleton;
 
@@ -49,31 +51,50 @@ public class BitbucketWebhookPayloadHandler implements WebhookPayloadHandler {
         return SIGNATURE_HEADER_KEY;
     }
 
+    /**
+     * @return the first branch of the push only: use {@link #extractBranchNames(JsonNode)} to know every branch a
+     * push updated
+     */
     @Override
     public Optional<String> extractBranchName(final JsonNode payload) {
+        return branchNames(payload).stream().findFirst();
+    }
+
+    /**
+     * A single push can update several branches, each one being a {@code push.changes[]} entry.
+     */
+    @Override
+    public Set<String> extractBranchNames(final JsonNode payload) {
+        return branchNames(payload);
+    }
+
+    private static Set<String> branchNames(final JsonNode payload) {
         final var pushNode = payload.get("push");
         if (pushNode == null || pushNode.isNull()) {
             log.warn("Bitbucket webhook payload missing 'push' field");
-            return Optional.empty();
+            return Set.of();
         }
 
         final var changesNode = pushNode.get("changes");
         if (changesNode == null || !changesNode.isArray()) {
             log.warn("Bitbucket webhook payload missing 'push.changes' array");
-            return Optional.empty();
+            return Set.of();
         }
 
+        final var names = new LinkedHashSet<String>();
         for (final var change : changesNode) {
             final var newNode = change.get("new");
             if (newNode != null && !newNode.isNull()) {
                 final var nameNode = newNode.get("name");
                 if (nameNode != null && !nameNode.isNull()) {
-                    return Optional.of(nameNode.asText());
+                    names.add(nameNode.asText());
                 }
             }
         }
 
-        log.debug("No new branch found in Bitbucket push changes");
-        return Optional.empty();
+        if (names.isEmpty()) {
+            log.debug("No new branch found in Bitbucket push changes");
+        }
+        return names;
     }
 }

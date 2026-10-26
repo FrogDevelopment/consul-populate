@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 class BitbucketWebhookPayloadHandlerTest {
@@ -235,15 +236,67 @@ class BitbucketWebhookPayloadHandlerTest {
         assertThat(result).isPresent().hasValue("develop");
     }
 
-    private ObjectNode createBitbucketPayload(String branchName) {
+    @Test
+    void extractBranchNames_shouldReturnEveryUpdatedBranchOfASinglePush() {
+        // given - a push updating feature and main at once
+        var payload = createBitbucketPayload("feature", "main");
+
+        // when
+        var result = handler.extractBranchNames(payload);
+
+        // then
+        assertThat(result).containsExactly("feature", "main");
+    }
+
+    @Test
+    void extractBranchNames_shouldIgnoreChangesWithoutNewBranch() {
+        // given - the first change deletes a branch (no "new"), the second one updates develop
+        var payload = createBitbucketPayload("develop");
+        var deletion = objectMapper.createObjectNode();
+        var old = objectMapper.createObjectNode();
+        old.put("name", "deleted-branch");
+        deletion.set("old", old);
+        ((ArrayNode) payload.get("push").get("changes")).insert(0, deletion);
+
+        // when
+        var result = handler.extractBranchNames(payload);
+
+        // then
+        assertThat(result).containsExactly("develop");
+    }
+
+    @Test
+    void extractBranchNames_shouldReturnEmptyWhenPushIsMissing() {
+        // when
+        var result = handler.extractBranchNames(objectMapper.createObjectNode());
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void extractBranchName_shouldStillReturnTheFirstBranchOfAMultiBranchPush() {
+        // given
+        var payload = createBitbucketPayload("feature", "main");
+
+        // when
+        var result = handler.extractBranchName(payload);
+
+        // then
+        assertThat(result).hasValue("feature");
+    }
+
+    private ObjectNode createBitbucketPayload(String... branchNames) {
         var payload = objectMapper.createObjectNode();
         var push = objectMapper.createObjectNode();
         var changes = objectMapper.createArrayNode();
-        var change = objectMapper.createObjectNode();
-        var newBranch = objectMapper.createObjectNode();
-        newBranch.put("name", branchName);
-        change.set("new", newBranch);
-        changes.add(change);
+        for (var branchName : branchNames) {
+            var change = objectMapper.createObjectNode();
+            var newBranch = objectMapper.createObjectNode();
+            newBranch.put("name", branchName);
+            change.set("new", newBranch);
+            changes.add(change);
+        }
         push.set("changes", changes);
         payload.set("push", push);
         return payload;
