@@ -41,6 +41,8 @@ public class ConsulPopulateCommand implements Runnable {
     String consulKvPrefix;
     @Option(names = {"--consul.kv.version"})
     String consulKvVersion;
+    @Option(names = {"--consul.kv.prune"})
+    Boolean consulKvPrune;
     @Option(names = {"--consul.files.format"}, defaultValue = "YAML")
     String consulFileFormat;
     @Option(names = {"--consul.files.target"})

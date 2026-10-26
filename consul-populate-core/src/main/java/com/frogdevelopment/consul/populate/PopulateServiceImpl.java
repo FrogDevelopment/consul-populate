@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Function;
@@ -65,10 +66,15 @@ class PopulateServiceImpl implements PopulateService {
                 .forEach(operations::add);
 
         // retrieve current configs in Consul KV and append DELETE operations for removed keys
-        final var existingKeysInConsul = toBlocking(consulClient.getKeys(kvPath));
-        final var keysToDelete = existingKeysInConsul.stream()
-                .filter(Predicate.not(configsToImport::containsKey))
-                .toList();
+        final List<String> keysToDelete;
+        if (globalProperties.getKv().isPrune()) {
+            keysToDelete = toBlocking(consulClient.getKeys(kvPath)).stream()
+                    .filter(Predicate.not(configsToImport::containsKey))
+                    .toList();
+        } else {
+            log.info("consul.kv.prune=false: keys under '{}' that are not in the source are kept", kvPath);
+            keysToDelete = List.of();
+        }
         keysToDelete.stream()
                 .map(toDeleteOperation())
                 .forEach(operations::add);
@@ -77,6 +83,11 @@ class PopulateServiceImpl implements PopulateService {
         if (dryRun) {
             logPlan(configsToImport.keySet(), keysToDelete, txnCount);
             return;
+        }
+        if (!keysToDelete.isEmpty()) {
+            // everything under the prefix that is not in the source goes: make it visible, it may not be intended
+            log.warn("{} key(s) under '{}' are not in the source and will be deleted (consul.kv.prune=false keeps them)",
+                    keysToDelete.size(), kvPath);
         }
         log.info("Exporting data to consul ({} operations in {} transaction(s))", operations.size(), txnCount);
 

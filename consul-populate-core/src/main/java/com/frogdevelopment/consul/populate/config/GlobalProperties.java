@@ -86,6 +86,13 @@ public class GlobalProperties {
         private Optional<@Pattern(regexp = "[\\w\\-.]+") String> version = Optional.empty();
 
         /**
+         * Whether to delete the keys under the KV path that are not in the imported data. Defaults to {@code true}.
+         * Set it to {@code false} when other writers share the same prefix: nothing but the imported keys is touched
+         * then.
+         */
+        private boolean prune = true;
+
+        /**
          * @return Path by concatenating {@code kv.path} and {@code kv.version} if present
          */
         @ToString.Include(name = "path")

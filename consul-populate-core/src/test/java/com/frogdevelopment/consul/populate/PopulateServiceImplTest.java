@@ -23,8 +23,14 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 
 import com.frogdevelopment.consul.populate.config.GlobalProperties;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 import io.vertx.core.Future;
 import io.vertx.ext.consul.ConsulClient;
@@ -50,9 +56,10 @@ class PopulateServiceImplTest {
     @Captor
     private ArgumentCaptor<TxnRequest> txnRequestCaptor;
 
+    private final GlobalProperties.KV kv = new GlobalProperties.KV();
+
     @BeforeEach
     void setUp() {
-        var kv = new GlobalProperties.KV();
         // lenient: some tests fail before Consul's keys are read
         lenient().when(globalProperties.getKv()).thenReturn(kv);
         given(consulClient.leaderStatus()).willReturn(Future.succeededFuture("leader"));
@@ -173,6 +180,67 @@ class PopulateServiceImplTest {
                 .isExactlyInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Consul is not reachable");
         verify(consulClient, never()).transaction(any());
+    }
+
+    @Test
+    void should_keep_the_keys_that_are_not_in_the_source_when_prune_is_disabled() {
+        // given - a key in Consul that the source does not have
+        kv.setPrune(false);
+        given(dataImporter.execute()).willReturn(Map.of("new-key", "value"));
+
+        // when
+        populateService.populate(false);
+
+        // then - nothing to delete, so Consul's keys are not even listed
+        verify(consulClient, never()).getKeys(any());
+        verify(consulClient).transaction(txnRequestCaptor.capture());
+        assertThat(txnRequestCaptor.getValue().getOperationsSize()).isEqualTo(1);
+    }
+
+    @Test
+    void should_warn_about_the_number_of_keys_it_deletes() {
+        // given
+        given(dataImporter.execute()).willReturn(Map.of("new-key", "value"));
+        given(consulClient.getKeys(any()))
+                .willReturn(Future.succeededFuture(List.of("config/new-key", "config/old-1", "config/old-2")));
+        final var logger = (Logger) LoggerFactory.getLogger(PopulateServiceImpl.class);
+        final var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            // when
+            populateService.populate(false);
+
+            // then
+            assertThat(appender.list)
+                    .filteredOn(event -> event.getLevel() == Level.WARN)
+                    .extracting(ILoggingEvent::getFormattedMessage)
+                    .singleElement()
+                    .satisfies(message -> assertThat(message).contains("2 key(s)").contains("'config/'"));
+        } finally {
+            logger.detachAppender(appender);
+        }
+    }
+
+    @Test
+    void should_not_warn_when_nothing_is_deleted() {
+        // given
+        given(dataImporter.execute()).willReturn(Map.of("new-key", "value"));
+        final var logger = (Logger) LoggerFactory.getLogger(PopulateServiceImpl.class);
+        final var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            // when
+            populateService.populate(false);
+
+            // then
+            assertThat(appender.list).noneMatch(event -> event.getLevel() == Level.WARN);
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     @Test
