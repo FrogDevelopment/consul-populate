@@ -80,6 +80,8 @@ KV path: `consul.kv.prefix` (default `config`), `consul.kv.version` (optional pa
 (default `true`: delete the keys under the path that are not in the source)  
 Files mode: `consul.files.format` (YAML|JSON|PROPERTIES), `consul.files.root-path`, `consul.files.target`  
 Git mode: `consul.git.uri`, `consul.git.token` (preferred) or `username/password`, `consul.git.branch`,
+`consul.git.ssl-verify` (default `true`; `false` accepts any certificate, applied by `GitTransportConfigCallback` to
+the clone and the fetch because JGit only reads `http.sslVerify` from a repository config that does not exist yet),
 `consul.git.poll-enabled`, `consul.git.poll-interval`, `consul.git.webhook.type` (GITHUB|BITBUCKET|CUSTOM),
 `consul.git.webhook.secret` (required when a webhook is configured, unless `consul.git.webhook.allow-unsigned=true`;
 `WebhookSecretValidator` stops the startup otherwise)

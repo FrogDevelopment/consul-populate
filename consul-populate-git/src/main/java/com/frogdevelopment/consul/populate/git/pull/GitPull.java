@@ -25,6 +25,7 @@ import org.eclipse.jgit.lib.ObjectId;
 
 import com.frogdevelopment.consul.populate.PopulateService;
 import com.frogdevelopment.consul.populate.git.GitProperties;
+import com.frogdevelopment.consul.populate.git.GitTransportConfigCallback;
 
 /**
  * Synchronizes the local clone with the remote branch and populates Consul when the content changed.
@@ -120,6 +121,7 @@ public class GitPull {
     private void fetchAndReset() throws GitAPIException {
         git.fetch()
                 .setRemote(Constants.DEFAULT_REMOTE_NAME)
+                .setTransportConfigCallback(new GitTransportConfigCallback(gitProperties.isSslVerify()))
                 .call();
         git.reset()
                 .setMode(ResetType.HARD)

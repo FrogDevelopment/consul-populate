@@ -62,6 +62,7 @@ class GitFactoryTest {
         given(gitProperties.getToken()).willReturn("my-token");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -69,6 +70,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -94,6 +96,7 @@ class GitFactoryTest {
         given(gitProperties.getPassword()).willReturn("password");
         given(gitProperties.getBranch()).willReturn("develop");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -101,6 +104,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -118,6 +122,7 @@ class GitFactoryTest {
         given(gitProperties.getToken()).willReturn("my-token");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -125,6 +130,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -147,6 +153,7 @@ class GitFactoryTest {
         given(gitProperties.getToken()).willReturn("token");
         given(gitProperties.getBranch()).willReturn(branch);
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -154,6 +161,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -178,6 +186,7 @@ class GitFactoryTest {
         given(gitProperties.getToken()).willReturn("token");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -185,6 +194,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -203,6 +213,7 @@ class GitFactoryTest {
         given(gitProperties.getToken()).willReturn("token");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -210,6 +221,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willThrow(new GitAPIException("Clone failed") {});
 
         // when/then
@@ -226,6 +238,7 @@ class GitFactoryTest {
         given(gitProperties.getToken()).willReturn("token");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -233,6 +246,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -250,6 +264,7 @@ class GitFactoryTest {
         given(gitProperties.getUri()).willReturn("https://github.com/user/public-repo.git");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -257,6 +272,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -276,6 +292,7 @@ class GitFactoryTest {
         given(gitProperties.getUsername()).willReturn("");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -283,6 +300,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -300,6 +318,7 @@ class GitFactoryTest {
         given(gitProperties.getUsername()).willReturn("username");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -307,6 +326,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when
@@ -328,6 +348,7 @@ class GitFactoryTest {
         given(gitProperties.getPassword()).willReturn("pass");
         given(gitProperties.getBranch()).willReturn("main");
         given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+        given(gitProperties.isSslVerify()).willReturn(true);
 
         gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
         given(cloneCommand.setURI(any())).willReturn(cloneCommand);
@@ -335,6 +356,7 @@ class GitFactoryTest {
         given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
         given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
         given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.setTransportConfigCallback(any())).willReturn(cloneCommand);
         given(cloneCommand.call()).willReturn(git);
 
         // when

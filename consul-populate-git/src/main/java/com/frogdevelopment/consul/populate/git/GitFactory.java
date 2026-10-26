@@ -44,6 +44,12 @@ public class GitFactory {
         createCredentialsProvider(gitProperties).ifPresent(CredentialsProvider::setDefault);
         final var repositoryDirectory = repositoryDirectoryProvider.getRepository();
 
+        final var sslVerify = gitProperties.isSslVerify();
+        if (!sslVerify) {
+            log.warn("consul.git.ssl-verify=false: the TLS certificate of the git server is NOT verified, so the "
+                    + "connection can be intercepted. Prefer adding the certificate to the JVM trust store.");
+        }
+
         log.debug("Cloning repository [{}]", gitProperties.getUri());
         return Git.cloneRepository()
                 .setURI(gitProperties.getUri())
@@ -51,6 +57,7 @@ public class GitFactory {
                 .setGitDir(repositoryDirectory.resolve(Constants.DOT_GIT).toFile())
                 .setBranch(gitProperties.getBranch())
                 .setRemote(Constants.DEFAULT_REMOTE_NAME)
+                .setTransportConfigCallback(new GitTransportConfigCallback(sslVerify))
                 .call();
     }
 
