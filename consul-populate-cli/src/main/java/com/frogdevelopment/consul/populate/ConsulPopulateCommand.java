@@ -62,9 +62,8 @@ public class ConsulPopulateCommand implements Runnable {
         log.info("Resulting properties from the passed arguments:\n\t- {}\n\t- {}", globalProperties, importProperties);
 
         if (dryRun) {
-            log.warn("Nothing done due to --dry-run=true");
-        } else {
-            populateService.populate();
+            log.warn("--dry-run=true: the configuration is read and validated, but nothing is written to Consul");
         }
+        populateService.populate(dryRun);
     }
 }
