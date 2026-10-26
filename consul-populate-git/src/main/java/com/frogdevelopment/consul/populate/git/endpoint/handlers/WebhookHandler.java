@@ -100,7 +100,7 @@ public class WebhookHandler {
         }
 
         final var secret = gitProperties.getWebhook().getSecret();
-        if (StringUtils.isNotEmpty(secret)) {
+        if (StringUtils.hasText(secret)) {
             final var signature = request.getHeaders().get(handler.getSignatureHeaderKey());
             if (StringUtils.isEmpty(signature)) {
                 log.warn("Webhook secret is configured but no signature header was provided");
