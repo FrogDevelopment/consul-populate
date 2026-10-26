@@ -30,7 +30,7 @@ spec:
         - env:
             - name: CONSUL_DISABLE_PERM_MGMT
               value: "true"
-          image: hashicorp/consul:1.18.1
+          image: hashicorp/consul:1.22.7
           imagePullPolicy: IfNotPresent
           name: consul
           ports:
@@ -98,7 +98,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: consul-populate
-          image: frogdevelopment/consul-populate:1.0.0-SNAPSHOT
+          image: frogdevelopment/consul-populate:1.2.7
           args:
             - "--consul.host=consul-svc"
             - "--consul.port=8500"
