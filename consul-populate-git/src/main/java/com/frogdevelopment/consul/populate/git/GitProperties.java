@@ -110,11 +110,18 @@ public class GitProperties {
         private GitType type = GitType.GITHUB;
 
         /**
-         * Secret key for webhook signature verification (optional).
-         * If set, incoming webhooks must include a valid signature.
+         * Secret key for webhook signature verification.
+         * Incoming webhooks must include a valid signature. Required unless {@link #allowUnsigned} is {@code true}:
+         * the application refuses to start without it.
          */
         @Nullable
         private String secret;
+
+        /**
+         * Accept webhooks without verifying their signature when no {@link #secret} is configured (default: false).
+         * Anyone who can reach the endpoint can then trigger a pull; only enable it on a trusted network.
+         */
+        private boolean allowUnsigned = false;
 
         /**
          * Supported git provider types for webhooks.
