@@ -57,7 +57,7 @@ public class GlobalProperties {
     private Optional<String> dc = Optional.empty();
 
     /**
-     * Amount of time (in milliseconds) for requests
+     * Amount of time (in milliseconds) for requests. Defaults to {@code 30000}; {@code 0} disables the timeout
      */
     private OptionalLong timeout = OptionalLong.empty();
 
