@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import jakarta.inject.Singleton;
 
-import com.frogdevelopment.consul.populate.PopulateService;
 import com.frogdevelopment.consul.populate.git.GitProperties;
+import com.frogdevelopment.consul.populate.git.pull.GitPull;
 import com.frogdevelopment.consul.populate.git.pull.GitPullJob;
 
 import io.micronaut.core.annotation.Blocking;
@@ -35,14 +35,15 @@ import io.micronaut.scheduling.annotation.Async;
 @RequiredArgsConstructor
 public class ServerEventsListener {
 
-    private final PopulateService populateService;
+    private final GitPull gitPull;
     private final GitProperties gitProperties;
     private final GitPullJob gitPullJob;
 
     /**
      * Handles server startup by populating Consul and optionally starting the pull job.
      *
-     * <p>This method runs asynchronously to avoid blocking server startup.
+     * <p>This method runs asynchronously to avoid blocking server startup. A failed initial population is logged and
+     * does not prevent the pull job from starting: the next pull retries it.
      *
      * @param ignored the server startup event (unused)
      */
@@ -50,7 +51,11 @@ public class ServerEventsListener {
     @EventListener
     public void onServerStartupEvent(final ServerStartupEvent ignored) {
         log.info("Populating Consul with repository");
-        populateService.populate();
+        try {
+            gitPull.populate();
+        } catch (final Exception e) {
+            log.error("Initial population of Consul failed, it will be retried on the next pull", e);
+        }
 
         if (gitProperties.isPollEnabled()) {
             gitPullJob.start();

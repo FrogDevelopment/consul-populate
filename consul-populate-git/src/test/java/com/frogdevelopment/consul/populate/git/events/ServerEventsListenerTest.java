@@ -1,7 +1,9 @@
 package com.frogdevelopment.consul.populate.git.events;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
 import org.junit.jupiter.api.Nested;
@@ -11,8 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.frogdevelopment.consul.populate.PopulateService;
 import com.frogdevelopment.consul.populate.git.GitProperties;
+import com.frogdevelopment.consul.populate.git.pull.GitPull;
 import com.frogdevelopment.consul.populate.git.pull.GitPullJob;
 
 import io.micronaut.runtime.server.event.ServerShutdownEvent;
@@ -22,7 +24,7 @@ import io.micronaut.runtime.server.event.ServerStartupEvent;
 class ServerEventsListenerTest {
 
     @Mock
-    private PopulateService populateService;
+    private GitPull gitPull;
     @Mock
     private GitProperties gitProperties;
     @Mock
@@ -47,7 +49,7 @@ class ServerEventsListenerTest {
             serverEventsListener.onServerStartupEvent(serverStartupEvent);
 
             // then
-            then(populateService).should().populate();
+            then(gitPull).should().populate();
             then(gitPullJob).should().start();
         }
 
@@ -60,7 +62,32 @@ class ServerEventsListenerTest {
             serverEventsListener.onServerStartupEvent(serverStartupEvent);
 
             // then
-            then(populateService).should().populate();
+            then(gitPull).should().populate();
+            then(gitPullJob).should(never()).start();
+        }
+
+        @Test
+        void shouldStillStartPullJob_whenInitialPopulationFails() {
+            // given
+            willThrow(new IllegalStateException("Consul is not reachable")).given(gitPull).populate();
+            given(gitProperties.isPollEnabled()).willReturn(true);
+
+            // when
+            serverEventsListener.onServerStartupEvent(serverStartupEvent);
+
+            // then
+            then(gitPullJob).should().start();
+        }
+
+        @Test
+        void shouldNotThrow_whenInitialPopulationFailsAndPollingDisabled() {
+            // given
+            willThrow(new IllegalStateException("Consul is not reachable")).given(gitPull).populate();
+            given(gitProperties.isPollEnabled()).willReturn(false);
+
+            // when / then
+            assertThatCode(() -> serverEventsListener.onServerStartupEvent(serverStartupEvent))
+                    .doesNotThrowAnyException();
             then(gitPullJob).should(never()).start();
         }
     }
