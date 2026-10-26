@@ -32,7 +32,7 @@ sonar {
 testing {
     suites {
         // Configure the built-in test suite
-        val test by getting(JvmTestSuite::class) {
+        getByName<JvmTestSuite>("test") {
             // Use JUnit Jupiter test framework
             useJUnitJupiter(mn.versions.junit5)
         }
