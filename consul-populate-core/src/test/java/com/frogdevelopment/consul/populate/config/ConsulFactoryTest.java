@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -89,6 +90,40 @@ class ConsulFactoryTest {
             assertThat(consulClientOptions.getHost()).isEqualTo("my-domain");
             assertThat(consulClientOptions.getPort()).isEqualTo(443);
             assertThat(consulClientOptions.isSsl()).isTrue();
+        }
+    }
+
+    @Test
+    void should_use_default_timeout_when_none_is_configured() {
+        // given
+        try(var stub = Mockito.mockStatic(ConsulClient.class)) {
+            stub.when(()-> ConsulClient.create(eq(vertx), consulClientOptionsCaptor.capture()))
+                    .thenReturn(consulClient);
+            given(properties.getUri()).willReturn(Optional.of("http://my-domain"));
+            given(properties.getTimeout()).willReturn(OptionalLong.empty());
+
+            // when
+            consulFactory.consulClient(vertx, properties);
+
+            // then
+            assertThat(consulClientOptionsCaptor.getValue().getTimeout()).isEqualTo(30_000);
+        }
+    }
+
+    @Test
+    void should_use_configured_timeout() {
+        // given
+        try(var stub = Mockito.mockStatic(ConsulClient.class)) {
+            stub.when(()-> ConsulClient.create(eq(vertx), consulClientOptionsCaptor.capture()))
+                    .thenReturn(consulClient);
+            given(properties.getUri()).willReturn(Optional.of("http://my-domain"));
+            given(properties.getTimeout()).willReturn(OptionalLong.of(5_000));
+
+            // when
+            consulFactory.consulClient(vertx, properties);
+
+            // then
+            assertThat(consulClientOptionsCaptor.getValue().getTimeout()).isEqualTo(5_000);
         }
     }
 

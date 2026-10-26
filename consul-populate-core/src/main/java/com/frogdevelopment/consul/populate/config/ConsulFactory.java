@@ -21,6 +21,7 @@ public class ConsulFactory {
 
     static final int DEFAULT_HTTP_PORT = 80;
     static final int DEFAULT_HTTPS_PORT = 443;
+    static final long DEFAULT_TIMEOUT_MS = 30_000;
 
     @Singleton
     @Bean(preDestroy = "close")
@@ -52,7 +53,8 @@ public class ConsulFactory {
         }
         properties.getDc().ifPresent(consulClientOptions::setDc);
         properties.getAclToken().ifPresent(consulClientOptions::setAclToken);
-        properties.getTimeout().ifPresent(consulClientOptions::setTimeout);
+        // Vert.x applies no timeout at all when it is 0, which would make a stalled Consul hang the caller forever
+        consulClientOptions.setTimeout(properties.getTimeout().orElse(DEFAULT_TIMEOUT_MS));
 //        properties.getConnectTimeout().ifPresent(consulClientOptions::setConnectTimeout);
 
         return ConsulClient.create(vertx, consulClientOptions);
