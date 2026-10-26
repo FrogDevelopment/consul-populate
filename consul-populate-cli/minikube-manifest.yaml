@@ -106,7 +106,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: consul-populate
-          image: frogdevelopment/consul-populate:1.2.7
+          image: frogdevelopment/consul-populate:1.4.0-SNAPSHOT
           args:
             - "--consul.host=consul-svc"
             - "--consul.port=8500"

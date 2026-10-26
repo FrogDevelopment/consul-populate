@@ -13,7 +13,7 @@ services:
       retries: 15
 
   consul-populate:
-    image: frogdevelopment/consul-populate:1.2.7
+    image: frogdevelopment/consul-populate:1.4.0-SNAPSHOT
     depends_on:
       consul:
         condition: service_healthy
