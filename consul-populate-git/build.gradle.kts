@@ -29,8 +29,6 @@ dependencies {
 
     compileOnly(mn.lombok)
 
-    runtimeOnly(mn.logback.classic)
-
     testImplementation(mn.assertj.core)
     testImplementation(mn.junit.jupiter.params)
     testImplementation(mn.mockito.junit.jupiter)

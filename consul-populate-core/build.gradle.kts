@@ -19,15 +19,15 @@ dependencies {
 
     implementation(mn.micronaut.jackson.databind)
     implementation(mn.micronaut.validation)
-    implementation(libs.vertx.consul)
+    // exposed in the public API (VertxUtils.toBlocking takes a Vert.x Future)
+    api(libs.vertx.consul)
     implementation(libs.commons.io)
     implementation(mn.snakeyaml)
 
     compileOnly(mn.lombok)
 
-    runtimeOnly(mn.logback.classic)
-
     testImplementation(libs.jetbrains.annotations)
+    testImplementation(mn.logback.classic)
     testImplementation(mn.assertj.core)
     testImplementation(mn.junit.jupiter.params)
     testImplementation(mn.mockito.junit.jupiter)
