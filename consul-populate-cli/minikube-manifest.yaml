@@ -56,6 +56,8 @@ spec:
 # Note: to access locally UI use
 # - kubectl expose deployment consul --type=NodePort --port=8500
 # - minikube service consul -n consul-populate
+# This Consul runs in dev mode, without ACLs: anyone who can reach it can read and write the KV. Never expose it
+# beyond a local cluster.
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -96,6 +98,12 @@ spec:
   template:
     spec:
       automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: consul-populate
           image: frogdevelopment/consul-populate:1.2.7
@@ -107,14 +115,30 @@ spec:
             - "--consul.files.format=YAML"
             - "--consul.files.target=dev"
             - "--consul.files.root-path=/configurations"
+          # With ACLs enabled, give the token through a Secret rather than `--consul.acl-token=...` in args, which
+          # is readable in the pod spec and in the process list:
+          # env:
+          #   - name: CONSUL_ACL_TOKEN
+          #     valueFrom:
+          #       secretKeyRef: { name: consul-acl, key: token }
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ "ALL" ]
           volumeMounts:
             - mountPath: /configurations
               name: configurations
+            # the Vert.x client creates its cache in /tmp, which must stay writable with a read-only root filesystem
+            - mountPath: /tmp
+              name: tmp
       restartPolicy: Never
       volumes:
         - name: configurations
           persistentVolumeClaim:
             claimName: configurations-pvc
             readOnly: true
+        - name: tmp
+          emptyDir: { }
   backoffLimit: 3
