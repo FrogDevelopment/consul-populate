@@ -1,13 +1,23 @@
 services:
 
   consul:
-    image: hashicorp/consul:1.18.1
+    image: hashicorp/consul:1.22.7
     hostname: consul
     ports:
       - "8500:8500"
+    healthcheck:
+      test: [ "CMD", "consul", "members" ]
+      interval: 2s
+      timeout: 3s
+      retries: 15
 
   consul-populate:
-    image: frogdevelopment/consul-populate:1.0.0-SNAPSHOT
+    image: frogdevelopment/consul-populate:1.2.7
+    depends_on:
+      consul:
+        condition: service_healthy
+    # a one-shot job: retry a few times if the import fails, like the Kubernetes Job (backoffLimit)
+    restart: "on-failure:3"
     environment:
       CONSUL_HOST: consul
       CONSUL_PORT: 8500
