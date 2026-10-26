@@ -27,7 +27,8 @@ import io.micronaut.context.annotation.Requires;
  */
 @Slf4j
 @Singleton
-@Requires(property = "consul.git.webhook.type", pattern = "github|GITHUB")
+// defaultValue: the type defaults to GITHUB in GitProperties.Webhook, but @Requires reads the raw property
+@Requires(property = "consul.git.webhook.type", pattern = "github|GITHUB", defaultValue = "GITHUB")
 public class GithubWebhookPayloadHandler implements WebhookPayloadHandler {
 
     private static final String EVENT_HEADER_KEY = "X-GitHub-Event";
