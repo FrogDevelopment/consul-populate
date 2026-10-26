@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -52,9 +53,10 @@ class PopulateServiceImplTest {
     @BeforeEach
     void setUp() {
         var kv = new GlobalProperties.KV();
-        given(globalProperties.getKv()).willReturn(kv);
+        // lenient: some tests fail before Consul's keys are read
+        lenient().when(globalProperties.getKv()).thenReturn(kv);
         given(consulClient.leaderStatus()).willReturn(Future.succeededFuture("leader"));
-        given(consulClient.getKeys(any())).willReturn(Future.succeededFuture(List.of()));
+        lenient().when(consulClient.getKeys(any())).thenReturn(Future.succeededFuture(List.of()));
         lenient().when(consulClient.transaction(any())).thenReturn(Future.succeededFuture(txnResponse));
         lenient().when(txnResponse.getResultsSize()).thenReturn(0);
         lenient().when(txnResponse.getErrorsSize()).thenReturn(0);
@@ -126,6 +128,51 @@ class PopulateServiceImplTest {
 
         // then
         verify(consulClient, times(0)).transaction(any());
+    }
+
+    @Test
+    void should_read_everything_but_send_no_transaction_when_dry_run() {
+        // given - 70 keys to set and 1 stale key to delete would need 2 transactions
+        given(dataImporter.execute()).willReturn(entriesOfSize(70));
+        given(consulClient.getKeys(any())).willReturn(Future.succeededFuture(List.of("config/stale-key")));
+
+        // when
+        populateService.populate(true);
+
+        // then
+        verify(consulClient).leaderStatus();
+        verify(consulClient).getKeys(any());
+        verify(consulClient, never()).transaction(any());
+    }
+
+    @Test
+    void should_fail_dry_run_when_the_data_cannot_be_imported() {
+        // given
+        given(dataImporter.execute()).willThrow(new IllegalArgumentException("Root directory does not exist: /nowhere"));
+
+        // when
+        var caught = catchThrowable(() -> populateService.populate(true));
+
+        // then
+        assertThat(caught)
+                .isExactlyInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Root directory does not exist: /nowhere");
+        verify(consulClient, never()).transaction(any());
+    }
+
+    @Test
+    void should_fail_dry_run_when_consul_is_not_reachable() {
+        // given
+        given(consulClient.leaderStatus()).willReturn(Future.failedFuture("connection refused"));
+
+        // when
+        var caught = catchThrowable(() -> populateService.populate(true));
+
+        // then
+        assertThat(caught)
+                .isExactlyInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Consul is not reachable");
+        verify(consulClient, never()).transaction(any());
     }
 
     @Test

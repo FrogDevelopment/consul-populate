@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -39,7 +41,7 @@ class PopulateServiceImpl implements PopulateService {
     static final int MAX_OPERATIONS_PER_TXN = 64;
 
     @Override
-    public void populate() {
+    public void populate(final boolean dryRun) {
         try {
             toBlocking(consulClient.leaderStatus());
         } catch (final Exception e) {
@@ -64,12 +66,18 @@ class PopulateServiceImpl implements PopulateService {
 
         // retrieve current configs in Consul KV and append DELETE operations for removed keys
         final var existingKeysInConsul = toBlocking(consulClient.getKeys(kvPath));
-        existingKeysInConsul.stream()
+        final var keysToDelete = existingKeysInConsul.stream()
                 .filter(Predicate.not(configsToImport::containsKey))
+                .toList();
+        keysToDelete.stream()
                 .map(toDeleteOperation())
                 .forEach(operations::add);
 
         final var txnCount = (operations.size() + MAX_OPERATIONS_PER_TXN - 1) / MAX_OPERATIONS_PER_TXN;
+        if (dryRun) {
+            logPlan(configsToImport.keySet(), keysToDelete, txnCount);
+            return;
+        }
         log.info("Exporting data to consul ({} operations in {} transaction(s))", operations.size(), txnCount);
 
         // Consul transactions are limited to MAX_OPERATIONS_PER_TXN operations each
@@ -93,6 +101,14 @@ class PopulateServiceImpl implements PopulateService {
             }
             log.info("Transaction {}/{} succeeded: {} result(s)", txnNumber, txnCount, result.getResultsSize());
         }
+    }
+
+    private static void logPlan(final Collection<String> keysToSet, final Collection<String> keysToDelete,
+                                final int txnCount) {
+        log.info("Dry run, nothing is written to Consul: {} key(s) to set, {} key(s) to delete, in {} transaction(s)",
+                keysToSet.size(), keysToDelete.size(), txnCount);
+        new TreeSet<>(keysToSet).forEach(key -> log.info("  SET    {}", key));
+        keysToDelete.stream().sorted().forEach(key -> log.info("  DELETE {}", key));
     }
 
     private static Function<Map.Entry<String, String>, TxnKVOperation> toSetOperation() {
