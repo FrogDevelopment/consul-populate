@@ -10,7 +10,9 @@ on:
   push:
     branches: [ "**" ]
   release:
-    types: [ created ]
+    # `published`, not `created`: saving a draft release also fires `created`, which would deploy to Maven Central (a step
+    # that cannot be undone) before the release is published
+    types: [ published ]
 
 jobs:
   build:
