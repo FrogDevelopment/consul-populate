@@ -64,8 +64,10 @@ ConsulPopulateCommand (CLI) / GitEndpoint (server)
 - **`@Requires`-gated beans:** `FilesImportFactory` creates the correct importer based on `consul.files.format`; no
   runtime branching needed.
 - **`RepositoryDirectoryProvider`:** uses `AtomicReference` + `compareAndSet` for lock-free one-time git clone.
-- **Index change listener in `GitPullJob`:** triggers immediate population on detected JGit index changes
-  (event-driven, not just timed).
+- **`GitPull` owns pull + populate:** every trigger (poll, webhook, force-pull) runs fetch, `reset --hard` to the remote
+  branch (a force-push never leaves a merge commit), then populates Consul if HEAD differs from the last populated
+  commit. One lock serializes pulls and populates; a failed populate is retried on the next pull even if nothing
+  changed upstream. `GitPullJob` only schedules the poll, so webhooks work with `poll-enabled=false`.
 
 ### Configuration properties
 
