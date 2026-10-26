@@ -10,6 +10,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -194,7 +195,7 @@ class WebhookHandlerTest {
                 given(httpHeaders.get("X-Hub-Signature-256")).willReturn(validSignature);
                 var jsonNode = new ObjectMapper().createObjectNode().put("ref", "refs/heads/main");
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
-                given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.of("refs/heads/main"));
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of("refs/heads/main"));
                 given(gitProperties.getBranch()).willReturn("main");
                 given(gitPull.pull(WEBHOOK)).willReturn(SUCCESS);
 
@@ -231,7 +232,7 @@ class WebhookHandlerTest {
                 // given
                 var jsonNode = new ObjectMapper().createObjectNode().put("ref", ref);
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
-                given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.of(ref));
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of(ref));
                 given(gitProperties.getBranch()).willReturn(configuredBranch);
                 given(gitPull.pull(WEBHOOK)).willReturn(SUCCESS);
 
@@ -248,7 +249,7 @@ class WebhookHandlerTest {
                 // given
                 var jsonNode = new ObjectMapper().createObjectNode().put("ref", "refs/heads/main");
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
-                given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.of("refs/heads/main"));
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of("refs/heads/main"));
                 given(gitProperties.getBranch()).willReturn("main");
                 given(gitPull.pull(WEBHOOK)).willReturn(FAILURE);
 
@@ -272,7 +273,7 @@ class WebhookHandlerTest {
                 // given
                 var jsonNode = new ObjectMapper().createObjectNode().put("ref", "refs/heads/develop");
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
-                given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.of("refs/heads/develop"));
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of("refs/heads/develop"));
                 given(gitProperties.getBranch()).willReturn("main");
 
                 // when
@@ -288,7 +289,7 @@ class WebhookHandlerTest {
                 // given
                 var jsonNode = new ObjectMapper().createObjectNode();
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
-                given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.empty());
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of());
                 given(gitPull.pull(WEBHOOK)).willReturn(SUCCESS);
 
                 // when
@@ -297,6 +298,39 @@ class WebhookHandlerTest {
                 // then
                 assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
                 then(gitPull).should().pull(WEBHOOK);
+            }
+
+            @Test
+            void handle_shouldTriggerPull_whenTheTrackedBranchIsAmongSeveralUpdatedBranches() throws JsonProcessingException {
+                // given - one push updating feature and main, the tracked branch being the second one
+                var jsonNode = new ObjectMapper().createObjectNode();
+                given(objectMapper.readTree("body")).willReturn(jsonNode);
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of("feature", "refs/heads/main"));
+                given(gitProperties.getBranch()).willReturn("main");
+                given(gitPull.pull(WEBHOOK)).willReturn(SUCCESS);
+
+                // when
+                var response = webhookHandler.handle(httpRequest, "body");
+
+                // then
+                assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+                then(gitPull).should().pull(WEBHOOK);
+            }
+
+            @Test
+            void handle_shouldReturnNotModified_whenTheTrackedBranchIsNotAmongTheUpdatedBranches() throws JsonProcessingException {
+                // given
+                var jsonNode = new ObjectMapper().createObjectNode();
+                given(objectMapper.readTree("body")).willReturn(jsonNode);
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of("feature", "develop"));
+                given(gitProperties.getBranch()).willReturn("main");
+
+                // when
+                var response = webhookHandler.handle(httpRequest, "body");
+
+                // then
+                assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
+                then(gitPull).should(never()).pull(any());
             }
 
             @Test

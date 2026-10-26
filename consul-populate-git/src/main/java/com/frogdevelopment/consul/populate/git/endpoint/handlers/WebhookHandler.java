@@ -11,8 +11,10 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -154,15 +156,19 @@ public class WebhookHandler {
     private HttpResponse<Void> triggerPullingIfNeeded(final String body, final WebhookPayloadHandler handler) {
         try {
             final var jsonNode = objectMapper.readTree(body);
-            final var branchName = handler.extractBranchName(jsonNode);
-
-            final var toPull = branchName
+            // a single push can update several branches: pull when the tracked one is among them
+            final var branches = handler.extractBranchNames(jsonNode)
+                    .stream()
                     .map(ref -> REFS_HEADS_PATTERN.matcher(ref).replaceFirst(""))
-                    .map(branch -> branch.equals(gitProperties.getBranch()))
-                    .orElseGet(() -> {
-                        log.warn("Could not extract branch from webhook payload, triggering pull anyway");
-                        return true;
-                    });
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            final boolean toPull;
+            if (branches.isEmpty()) {
+                log.warn("Could not extract branch from webhook payload, triggering pull anyway");
+                toPull = true;
+            } else {
+                toPull = branches.contains(gitProperties.getBranch());
+            }
 
             if (toPull) {
                 if (gitPull.pull(WEBHOOK) != SUCCESS) {
@@ -174,7 +180,7 @@ public class WebhookHandler {
                 return HttpResponse.accepted();
             } else {
                 log.debug("Webhook ignored - branch mismatch (received: {}, expected: {})",
-                        branchName.orElse("unknown"), gitProperties.getBranch());
+                        branches, gitProperties.getBranch());
                 return HttpResponse.notModified();
             }
         } catch (final JsonProcessingException e) {
