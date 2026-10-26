@@ -1,5 +1,6 @@
 package com.frogdevelopment.consul.populate.git.endpoint.handlers;
 
+import static com.frogdevelopment.consul.populate.git.pull.Status.SUCCESS;
 import static com.frogdevelopment.consul.populate.git.pull.Trigger.FORCED;
 
 import lombok.RequiredArgsConstructor;
@@ -33,10 +34,9 @@ public class ForcePullHandler {
     /**
      * Handles a manual pull request by triggering a forced git pull.
      *
-     * @return {@link HttpResponse#ok()} after the pull operation completes
+     * @return {@link HttpResponse#ok()} when the pull succeeded, {@link HttpResponse#serverError()} when it failed
      */
     public HttpResponse<Void> handle() {
-        gitPull.pull(FORCED);
-        return HttpResponse.ok();
+        return gitPull.pull(FORCED) == SUCCESS ? HttpResponse.ok() : HttpResponse.serverError();
     }
 }
