@@ -82,7 +82,10 @@ tasks {
     jib {
 
         from {
-            image = "eclipse-temurin:21-jre-alpine"
+            // Pinned by digest, so that rebuilding a version gives the same image. Nothing updates it: refresh the digest
+            // when a new Temurin 21 patch release is published, then rebuild (amd64 and arm64 are in the index):
+            //   docker buildx imagetools inspect eclipse-temurin:21-jre-alpine
+            image = "eclipse-temurin:21-jre-alpine@sha256:b48e02e0ea88d7bfb305335df94923bdef394905f4147dccd52e873cf17b1088"
             platforms {
                 platform {
                     architecture = "amd64"
