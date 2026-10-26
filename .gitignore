@@ -15,3 +15,6 @@ out/
 .factorypath
 .tmp/
 **/application-local.yaml
+
+# local working document, not versioned
+/code-review.md
