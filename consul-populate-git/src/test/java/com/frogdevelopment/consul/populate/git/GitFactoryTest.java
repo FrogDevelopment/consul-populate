@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -240,6 +241,81 @@ class GitFactoryTest {
         // then
         var remoteCaptor = ArgumentCaptor.forClass(String.class);
         gitStaticMock.verify(Git::cloneRepository);
+    }
+
+    @Test
+    void shouldCloneAnonymously_whenNoCredentialsAreConfigured() throws GitAPIException {
+        // given - a public repository: token, username and password are all unset
+        var repositoryDir = Path.of("/tmp/repo");
+        given(gitProperties.getUri()).willReturn("https://github.com/user/public-repo.git");
+        given(gitProperties.getBranch()).willReturn("main");
+        given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+
+        gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
+        given(cloneCommand.setURI(any())).willReturn(cloneCommand);
+        given(cloneCommand.setDirectory(any())).willReturn(cloneCommand);
+        given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
+        given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
+        given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.call()).willReturn(git);
+
+        // when
+        var result = gitFactory.git(gitProperties, repositoryDirectoryProvider);
+
+        // then
+        assertThat(result).isSameAs(git);
+        credentialsProviderMock.verify(() -> CredentialsProvider.setDefault(any()), never());
+    }
+
+    @Test
+    void shouldCloneAnonymously_whenCredentialsAreBlank() throws GitAPIException {
+        // given
+        var repositoryDir = Path.of("/tmp/repo");
+        given(gitProperties.getUri()).willReturn("https://github.com/user/public-repo.git");
+        given(gitProperties.getToken()).willReturn("");
+        given(gitProperties.getUsername()).willReturn("");
+        given(gitProperties.getBranch()).willReturn("main");
+        given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+
+        gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
+        given(cloneCommand.setURI(any())).willReturn(cloneCommand);
+        given(cloneCommand.setDirectory(any())).willReturn(cloneCommand);
+        given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
+        given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
+        given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.call()).willReturn(git);
+
+        // when
+        gitFactory.git(gitProperties, repositoryDirectoryProvider);
+
+        // then
+        credentialsProviderMock.verify(() -> CredentialsProvider.setDefault(any()), never());
+    }
+
+    @Test
+    void shouldNotFail_whenUsernameIsSetWithoutPassword() throws GitAPIException {
+        // given
+        var repositoryDir = Path.of("/tmp/repo");
+        given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
+        given(gitProperties.getUsername()).willReturn("username");
+        given(gitProperties.getBranch()).willReturn("main");
+        given(repositoryDirectoryProvider.getRepository()).willReturn(repositoryDir);
+
+        gitStaticMock.when(Git::cloneRepository).thenReturn(cloneCommand);
+        given(cloneCommand.setURI(any())).willReturn(cloneCommand);
+        given(cloneCommand.setDirectory(any())).willReturn(cloneCommand);
+        given(cloneCommand.setGitDir(any())).willReturn(cloneCommand);
+        given(cloneCommand.setBranch(any())).willReturn(cloneCommand);
+        given(cloneCommand.setRemote(any())).willReturn(cloneCommand);
+        given(cloneCommand.call()).willReturn(git);
+
+        // when
+        gitFactory.git(gitProperties, repositoryDirectoryProvider);
+
+        // then
+        var credentialsCaptor = ArgumentCaptor.forClass(CredentialsProvider.class);
+        credentialsProviderMock.verify(() -> CredentialsProvider.setDefault(credentialsCaptor.capture()));
+        assertThat(credentialsCaptor.getValue()).isInstanceOf(UsernamePasswordCredentialsProvider.class);
     }
 
     @Test
