@@ -61,8 +61,12 @@ ConsulPopulateCommand (CLI) / GitEndpoint (server)
   formats require adding a permitted subclass.
 - **Async → sync bridge:** `VertxUtils.toBlocking()` wraps Vertx `CompletionStage` for the CLI path. Don't introduce
   raw blocking elsewhere.
-- **`@Requires`-gated beans:** `FilesImportFactory` creates the correct importer based on `consul.files.format`; no
-  runtime branching needed.
+- **Importer selection:** `FilesImportFactory` creates the importer with an exhaustive `switch` over
+  `consul.files.format` (the compiler flags a missing format); `GitImporter` does the same for git mode. Webhook
+  handlers, by contrast, are chosen with `@Requires` on the raw `consul.git.webhook.type` property, which ignores the
+  Java default: the GitHub handler declares `defaultValue = "GITHUB"` for that reason.
+- **CLI options mirror the configuration:** picocli rejects unknown arguments, so every `consul.*` property must be
+  declared as an option in `ConsulPopulateCommand`; `ConsulPopulateCommandOptionsTest` fails when one is missing.
 - **`RepositoryDirectoryProvider`:** uses `AtomicReference` + `compareAndSet` for lock-free one-time git clone.
 - **`GitPull` owns pull + populate:** every trigger (poll, webhook, force-pull) runs fetch, `reset --hard` to the remote
   branch (a force-push never leaves a merge commit), then populates Consul if HEAD differs from the last populated
@@ -71,12 +75,14 @@ ConsulPopulateCommand (CLI) / GitEndpoint (server)
 
 ### Configuration properties
 
-Consul connection: `consul.host/port/uri/secured/acl-token/dc/timeout`  
-KV path: `consul.kv.prefix` (default `config`), `consul.kv.version` (optional path segment)  
+Consul connection: `consul.host/port/uri/secured/acl-token/dc/timeout` (timeout defaults to 30 s, `0` disables it)  
+KV path: `consul.kv.prefix` (default `config`), `consul.kv.version` (optional path segment), `consul.kv.prune`
+(default `true`: delete the keys under the path that are not in the source)  
 Files mode: `consul.files.format` (YAML|JSON|PROPERTIES), `consul.files.root-path`, `consul.files.target`  
 Git mode: `consul.git.uri`, `consul.git.token` (preferred) or `username/password`, `consul.git.branch`,
 `consul.git.poll-enabled`, `consul.git.poll-interval`, `consul.git.webhook.type` (GITHUB|BITBUCKET|CUSTOM),
-`consul.git.webhook.secret`
+`consul.git.webhook.secret` (required when a webhook is configured, unless `consul.git.webhook.allow-unsigned=true`;
+`WebhookSecretValidator` stops the startup otherwise)
 
 ### Git server endpoints
 
@@ -88,7 +94,8 @@ Git mode: `consul.git.uri`, `consul.git.token` (preferred) or `username/password
 | `/git/toggle-poll` | POST   | Enable/disable polling        |
 
 Custom webhook providers implement `WebhookPayloadHandler` as a `@Singleton` and set
-`consul.git.webhook.type=CUSTOM`.
+`consul.git.webhook.type=CUSTOM`. A provider whose push can update several branches overrides `extractBranchNames`
+(the default wraps `extractBranchName`); the pull happens when the tracked branch is among them.
 
 ## Testing
 

@@ -46,7 +46,7 @@ public class GlobalProperties {
     private boolean secured = false;
 
     /**
-     * ACL token needed to read and write in KV path. When present, will be added to requests using `?token` query parameter
+     * ACL token needed to read and write in KV path. When present, will be sent in the {@code X-Consul-Token} header
      */
     @ToString.Exclude
     private Optional<String> aclToken = Optional.empty();
