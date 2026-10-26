@@ -23,6 +23,11 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -155,6 +160,31 @@ class WebhookHandlerTest {
                 // then
                 assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
                 then(gitPull).should(never()).pull(any());
+            }
+
+            @Test
+            void handle_shouldNotLogTheExpectedSignature_whenSignatureDoesNotMatch() {
+                // given - the valid HMAC-SHA256 of "body" with secret "my-secret" must never end up in the logs
+                final var validSignature = "6af7ab0e299ab0bcb975868b8ad57a70025d90b4ae6607c76ad6fa7a7cfc6307";
+                given(httpHeaders.get("X-Hub-Signature-256")).willReturn("sha256=" + "0".repeat(64));
+                final var logger = (Logger) LoggerFactory.getLogger(WebhookHandler.class);
+                final var appender = new ListAppender<ILoggingEvent>();
+                appender.start();
+                logger.addAppender(appender);
+
+                try {
+                    // when
+                    var response = webhookHandler.handle(httpRequest, "body");
+
+                    // then
+                    assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
+                    assertThat(appender.list)
+                            .extracting(ILoggingEvent::getFormattedMessage)
+                            .anyMatch(message -> message.contains("signature mismatch"))
+                            .noneMatch(message -> message.contains(validSignature));
+                } finally {
+                    logger.detachAppender(appender);
+                }
             }
 
             @ParameterizedTest

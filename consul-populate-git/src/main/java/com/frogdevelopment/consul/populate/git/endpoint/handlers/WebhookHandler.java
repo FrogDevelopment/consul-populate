@@ -141,7 +141,8 @@ public class WebhookHandler {
                 log.debug("Signature verified successfully");
                 return true;
             } else {
-                log.warn("Signature mismatch - expected: {}, received: {}", calculatedSignature, givenSignature);
+                // never log the expected signature: it would be the valid one for the payload that was just sent
+                log.warn("Webhook signature mismatch (algorithm={})", algorithm);
                 return false;
             }
         } catch (final NoSuchAlgorithmException | InvalidKeyException e) {
