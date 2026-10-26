@@ -55,7 +55,6 @@ public class ConsulFactory {
         properties.getAclToken().ifPresent(consulClientOptions::setAclToken);
         // Vert.x applies no timeout at all when it is 0, which would make a stalled Consul hang the caller forever
         consulClientOptions.setTimeout(properties.getTimeout().orElse(DEFAULT_TIMEOUT_MS));
-//        properties.getConnectTimeout().ifPresent(consulClientOptions::setConnectTimeout);
 
         return ConsulClient.create(vertx, consulClientOptions);
     }
