@@ -12,11 +12,6 @@ import static org.mockito.Mockito.times;
 import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.events.IndexChangedEvent;
-import org.eclipse.jgit.events.IndexChangedListener;
-import org.eclipse.jgit.events.ListenerList;
-import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +22,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.frogdevelopment.consul.populate.PopulateService;
 import com.frogdevelopment.consul.populate.git.GitProperties;
 
 import io.micronaut.scheduling.TaskScheduler;
@@ -38,24 +32,12 @@ class GitPullJobTest {
     @Mock
     private GitProperties gitProperties;
     @Mock
-    private PopulateService populateService;
-    @Mock
     private TaskScheduler taskScheduler;
-    @Mock
-    private Git git;
-    @Mock
-    private Repository repository;
-    @Mock
-    private ListenerList listenerList;
     @Mock
     private GitPull gitPull;
     @Mock
     private ScheduledFuture<?> scheduledFuture;
-    @Mock
-    private IndexChangedEvent indexChangedEvent;
 
-    @Captor
-    private ArgumentCaptor<IndexChangedListener> indexChangedListenerCaptor;
     @Captor
     private ArgumentCaptor<Runnable> runnableCaptor;
 
@@ -67,8 +49,6 @@ class GitPullJobTest {
 
         @BeforeEach
         void setUp() {
-            given(git.getRepository()).willReturn(repository);
-            given(repository.getListenerList()).willReturn(listenerList);
             given(gitProperties.getPollInterval()).willReturn(Duration.ofMinutes(5));
             willReturn(scheduledFuture).given(taskScheduler).scheduleWithFixedDelay(any(), any(), any(Runnable.class));
         }
@@ -109,21 +89,6 @@ class GitPullJobTest {
         }
 
         @Test
-        void start_shouldRegisterIndexChangedListener_thatTriggersPopulate() {
-            // when
-            gitPullJob.start();
-
-            // then
-            then(listenerList).should().addIndexChangedListener(indexChangedListenerCaptor.capture());
-
-            // when - simulate index change event
-            indexChangedListenerCaptor.getValue().onIndexChanged(indexChangedEvent);
-
-            // then
-            then(populateService).should().populate();
-        }
-
-        @Test
         void start_shouldResetStoppingFlag_whenRestartingAfterStop() {
             // given
             given(scheduledFuture.isDone()).willReturn(false, true, false);
@@ -144,8 +109,6 @@ class GitPullJobTest {
 
         @BeforeEach
         void setUp() {
-            given(git.getRepository()).willReturn(repository);
-            given(repository.getListenerList()).willReturn(listenerList);
             given(gitProperties.getPollInterval()).willReturn(Duration.ofMinutes(5));
             willReturn(scheduledFuture).given(taskScheduler).scheduleWithFixedDelay(any(), any(), runnableCaptor.capture());
         }
@@ -180,8 +143,6 @@ class GitPullJobTest {
     class Stop {
 
         private void setUpForRunningJob() {
-            given(git.getRepository()).willReturn(repository);
-            given(repository.getListenerList()).willReturn(listenerList);
             given(gitProperties.getPollInterval()).willReturn(Duration.ofMinutes(5));
             willReturn(scheduledFuture).given(taskScheduler).scheduleWithFixedDelay(any(), any(), any(Runnable.class));
         }
@@ -227,8 +188,6 @@ class GitPullJobTest {
     class IsRunning {
 
         private void setUpForRunningJob() {
-            given(git.getRepository()).willReturn(repository);
-            given(repository.getListenerList()).willReturn(listenerList);
             given(gitProperties.getPollInterval()).willReturn(Duration.ofMinutes(5));
             willReturn(scheduledFuture).given(taskScheduler).scheduleWithFixedDelay(any(), any(), any(Runnable.class));
         }

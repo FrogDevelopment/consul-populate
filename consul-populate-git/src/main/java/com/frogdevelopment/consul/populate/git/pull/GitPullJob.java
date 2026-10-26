@@ -13,17 +13,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import org.eclipse.jgit.api.Git;
-
-import com.frogdevelopment.consul.populate.PopulateService;
 import com.frogdevelopment.consul.populate.git.GitProperties;
 
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.TaskScheduler;
 
 /**
- * Orchestrates git repository population and optional pull for changes.
- * Triggers Consul population and sets up scheduled pulls when pull is enabled.
+ * Schedules the periodic {@link GitPull} when polling is enabled.
+ * Populating Consul after a pull is handled by {@link GitPull}, so the webhook and force-pull triggers behave the same
+ * whether or not this job is running.
  *
  * @author Le Gall Benoît
  * @since 1.2.0
@@ -34,10 +32,8 @@ import io.micronaut.scheduling.TaskScheduler;
 public class GitPullJob {
 
     private final GitProperties gitProperties;
-    private final PopulateService populateService;
     @Named(TaskExecutors.SCHEDULED)
     private final TaskScheduler taskScheduler;
-    private final Git git;
     private final GitPull gitPull;
 
     private final AtomicReference<ScheduledFuture<?>> scheduledFutureRef = new AtomicReference<>();
@@ -55,12 +51,6 @@ public class GitPullJob {
         }
 
         stopping.set(false);
-
-        log.info("Listening for index changes in repository");
-        git.getRepository().getListenerList().addIndexChangedListener(indexEvent -> {
-            log.info("Changes detected in repository");
-            populateService.populate();
-        });
 
         final var interval = gitProperties.getPollInterval();
         log.debug("Scheduling pull command with fixed scheduledInterval={}", interval);
