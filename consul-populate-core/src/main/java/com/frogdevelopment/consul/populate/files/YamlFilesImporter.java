@@ -24,8 +24,6 @@ public final class YamlFilesImporter extends FilesImporter {
 
     private static final List<String> EXTENSIONS = List.of("yaml", "yml");
 
-    private final ThreadLocal<Yaml> yaml =  ThreadLocal.withInitial(Yaml::new);
-
     /**
      * Constructor
      *
@@ -45,7 +43,7 @@ public final class YamlFilesImporter extends FilesImporter {
     @Override
     protected SequencedMap<String, Object> readFile(@NonNull final File file) throws IOException {
         try (final var reader = Files.newBufferedReader(file.toPath())) {
-            return yaml.get().load(reader);
+            return newYaml().load(reader);
         }
     }
 
@@ -55,6 +53,15 @@ public final class YamlFilesImporter extends FilesImporter {
         if (map.isEmpty()) {
             return "";
         }
-        return yaml.get().dumpAsMap(map);
+        return newYaml().dumpAsMap(map);
+    }
+
+    /**
+     * {@link Yaml} is not thread-safe, and this importer is a singleton that can run concurrently (poll, webhook,
+     * force-pull). Creating an instance per use is cheap for a handful of files and, unlike a {@link ThreadLocal},
+     * leaves nothing to clean up on long-lived threads.
+     */
+    private static Yaml newYaml() {
+        return new Yaml();
     }
 }
