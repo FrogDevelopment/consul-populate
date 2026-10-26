@@ -1,5 +1,6 @@
 package com.frogdevelopment.consul.populate.git.endpoint.handlers;
 
+import static com.frogdevelopment.consul.populate.git.pull.Status.SUCCESS;
 import static com.frogdevelopment.consul.populate.git.pull.Trigger.WEBHOOK;
 
 import lombok.RequiredArgsConstructor;
@@ -163,7 +164,11 @@ public class WebhookHandler {
                     });
 
             if (toPull) {
-                gitPull.pull(WEBHOOK);
+                if (gitPull.pull(WEBHOOK) != SUCCESS) {
+                    // a non-2xx lets the git provider flag the delivery as failed and redeliver it
+                    log.error("Webhook triggered pull for branch {} failed", gitProperties.getBranch());
+                    return HttpResponse.serverError();
+                }
                 log.info("Webhook triggered pull for branch: {}", gitProperties.getBranch());
                 return HttpResponse.accepted();
             } else {

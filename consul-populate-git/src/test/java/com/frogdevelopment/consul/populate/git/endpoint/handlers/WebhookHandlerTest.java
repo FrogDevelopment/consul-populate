@@ -1,5 +1,7 @@
 package com.frogdevelopment.consul.populate.git.endpoint.handlers;
 
+import static com.frogdevelopment.consul.populate.git.pull.Status.FAILURE;
+import static com.frogdevelopment.consul.populate.git.pull.Status.SUCCESS;
 import static com.frogdevelopment.consul.populate.git.pull.Trigger.WEBHOOK;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -164,6 +166,7 @@ class WebhookHandlerTest {
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
                 given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.of("refs/heads/main"));
                 given(gitProperties.getBranch()).willReturn("main");
+                given(gitPull.pull(WEBHOOK)).willReturn(SUCCESS);
 
                 // when
                 var response = webhookHandler.handle(httpRequest, "body");
@@ -200,6 +203,7 @@ class WebhookHandlerTest {
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
                 given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.of(ref));
                 given(gitProperties.getBranch()).willReturn(configuredBranch);
+                given(gitPull.pull(WEBHOOK)).willReturn(SUCCESS);
 
                 // when
                 var response = webhookHandler.handle(httpRequest, "body");
@@ -207,6 +211,22 @@ class WebhookHandlerTest {
                 // then
                 assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
                 then(gitPull).should().pull(WEBHOOK);
+            }
+
+            @Test
+            void handle_shouldReturnServerError_whenPullFails() throws JsonProcessingException {
+                // given
+                var jsonNode = new ObjectMapper().createObjectNode().put("ref", "refs/heads/main");
+                given(objectMapper.readTree("body")).willReturn(jsonNode);
+                given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.of("refs/heads/main"));
+                given(gitProperties.getBranch()).willReturn("main");
+                given(gitPull.pull(WEBHOOK)).willReturn(FAILURE);
+
+                // when
+                var response = webhookHandler.handle(httpRequest, "body");
+
+                // then
+                assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.getCode());
             }
 
             static Stream<Arguments> matchingBranches() {
@@ -239,6 +259,7 @@ class WebhookHandlerTest {
                 var jsonNode = new ObjectMapper().createObjectNode();
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
                 given(payloadHandler.extractBranchName(jsonNode)).willReturn(Optional.empty());
+                given(gitPull.pull(WEBHOOK)).willReturn(SUCCESS);
 
                 // when
                 var response = webhookHandler.handle(httpRequest, "body");

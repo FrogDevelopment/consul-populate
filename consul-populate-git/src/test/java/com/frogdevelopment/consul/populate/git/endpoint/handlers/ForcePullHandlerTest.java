@@ -1,7 +1,10 @@
 package com.frogdevelopment.consul.populate.git.endpoint.handlers;
 
+import static com.frogdevelopment.consul.populate.git.pull.Status.FAILURE;
+import static com.frogdevelopment.consul.populate.git.pull.Status.SUCCESS;
 import static com.frogdevelopment.consul.populate.git.pull.Trigger.FORCED;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +28,9 @@ class ForcePullHandlerTest {
 
     @Test
     void handle_shouldTriggerForcedPull() {
+        // given
+        given(gitPull.pull(FORCED)).willReturn(SUCCESS);
+
         // when
         forcePullHandler.handle();
 
@@ -33,11 +39,26 @@ class ForcePullHandlerTest {
     }
 
     @Test
-    void handle_shouldReturnOkResponse() {
+    void handle_shouldReturnOkResponse_whenPullSucceeds() {
+        // given
+        given(gitPull.pull(FORCED)).willReturn(SUCCESS);
+
         // when
         var response = forcePullHandler.handle();
 
         // then
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+    }
+
+    @Test
+    void handle_shouldReturnServerError_whenPullFails() {
+        // given
+        given(gitPull.pull(FORCED)).willReturn(FAILURE);
+
+        // when
+        var response = forcePullHandler.handle();
+
+        // then
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.getCode());
     }
 }
