@@ -2,6 +2,9 @@ package com.frogdevelopment.consul.populate.git;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Objects;
+import java.util.Optional;
+
 import jakarta.inject.Singleton;
 
 import org.eclipse.jgit.api.Git;
@@ -38,8 +41,7 @@ public class GitFactory {
     @Bean(preDestroy = "close")
     public Git git(final GitProperties gitProperties,
                    final RepositoryDirectoryProvider repositoryDirectoryProvider) throws GitAPIException {
-        final var credentialsProvider = createCredentialsProvider(gitProperties);
-        CredentialsProvider.setDefault(credentialsProvider);
+        createCredentialsProvider(gitProperties).ifPresent(CredentialsProvider::setDefault);
         final var repositoryDirectory = repositoryDirectoryProvider.getRepository();
 
         log.debug("Cloning repository [{}]", gitProperties.getUri());
@@ -52,13 +54,24 @@ public class GitFactory {
                 .call();
     }
 
-    private static CredentialsProvider createCredentialsProvider(final GitProperties gitProperties) {
+    /**
+     * @return the credentials to use, or empty to clone anonymously (public repository)
+     */
+    private static Optional<CredentialsProvider> createCredentialsProvider(final GitProperties gitProperties) {
         final var token = gitProperties.getToken();
         if (StringUtils.isNotEmpty(token)) {
-            return new UsernamePasswordCredentialsProvider(token, "");
-        } else {
-            return new UsernamePasswordCredentialsProvider(gitProperties.getUsername(), gitProperties.getPassword());
+            return Optional.of(new UsernamePasswordCredentialsProvider(token, ""));
         }
+
+        final var username = gitProperties.getUsername();
+        if (StringUtils.isNotEmpty(username)) {
+            // JGit's (String, String) constructor rejects a null password
+            return Optional.of(new UsernamePasswordCredentialsProvider(
+                    username, Objects.requireNonNullElse(gitProperties.getPassword(), "")));
+        }
+
+        log.info("No credentials configured, cloning anonymously");
+        return Optional.empty();
     }
 
 }
