@@ -50,6 +50,13 @@ public class GitProperties {
     private String password;
 
     /**
+     * Whether to verify the TLS certificate of the git server (default: true). Set it to {@code false} for a server with
+     * a self-signed certificate: the connection can then be intercepted, so prefer adding the certificate to the JVM
+     * trust store.
+     */
+    private boolean sslVerify = true;
+
+    /**
      * Branch to clone and track (default: "main")
      */
     @NotBlank
