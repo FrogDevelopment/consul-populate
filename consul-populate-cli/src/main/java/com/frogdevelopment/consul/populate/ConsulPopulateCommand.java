@@ -21,11 +21,17 @@ public class ConsulPopulateCommand implements Runnable {
 
     @Option(names = {"--dry-run"}, defaultValue = "false")
     boolean dryRun;
+    // Picocli rejects options it does not know, so every property that can be passed as `--consul.xxx` must be declared.
+    // ConsulPopulateCommandOptionsTest fails when a property of the configuration classes is missing here.
+    @Option(names = {"--consul.uri"})
+    String consulUri;
     @Option(names = {"--consul.host"}, defaultValue = "localhost")
     String consulHost;
     @Option(names = {"--consul.port"}, defaultValue = "8500")
     int consulPort;
-    @Option(names = {"--consul.acl-token"})
+    @Option(names = {"--consul.secured"})
+    Boolean consulSecured;
+    @Option(names = {"--consul.acl-token", "--consul.aclToken"})
     String aclToken;
     @Option(names = {"--consul.dc"})
     String dc;
