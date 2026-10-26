@@ -4,7 +4,8 @@ services:
     image: hashicorp/consul:1.22.7
     hostname: consul
     ports:
-      - "8500:8500"
+      # dev-mode Consul has no ACLs: anyone who reaches this port can read and write the KV, so keep it on this machine
+      - "127.0.0.1:8500:8500"
     healthcheck:
       test: [ "CMD", "consul", "members" ]
       interval: 2s
@@ -18,6 +19,15 @@ services:
         condition: service_healthy
     # a one-shot job: retry a few times if the import fails, like the Kubernetes Job (backoffLimit)
     restart: "on-failure:3"
+    # hardening: no root, nothing writable but /tmp (the Vert.x client creates its cache there), no capability
+    user: "10001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       CONSUL_HOST: consul
       CONSUL_PORT: 8500
@@ -26,5 +36,7 @@ services:
       CONSUL_FILES_FORMAT: YAML
       CONSUL_FILES_TARGET: dev
       CONSUL_FILES_ROOT_PATH: /configurations
+      # with ACLs enabled, pass the token from the environment of the host instead of writing it here:
+      # CONSUL_ACL_TOKEN: ${CONSUL_ACL_TOKEN}
     volumes:
       - ./src/test/resources/files:/configurations:ro

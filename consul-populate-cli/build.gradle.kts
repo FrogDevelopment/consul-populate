@@ -107,6 +107,8 @@ tasks {
 
         container {
             setMainClass(application.mainClass)
+            // do not run as root: the application only reads the configuration files and talks to Consul
+            user = "10001"
         }
 
     }
