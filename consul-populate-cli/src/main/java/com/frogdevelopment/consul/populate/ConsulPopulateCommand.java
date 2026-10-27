@@ -43,6 +43,8 @@ public class ConsulPopulateCommand implements Runnable {
     String consulKvVersion;
     @Option(names = {"--consul.kv.prune"})
     Boolean consulKvPrune;
+    @Option(names = {"--consul.kv.max-txn-bytes"})
+    Long consulKvMaxTxnBytes;
     @Option(names = {"--consul.files.format"}, defaultValue = "YAML")
     String consulFileFormat;
     @Option(names = {"--consul.files.target"})

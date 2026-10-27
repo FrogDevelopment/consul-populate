@@ -6,6 +6,7 @@ import lombok.ToString;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -91,6 +92,15 @@ public class GlobalProperties {
          * then.
          */
         private boolean prune = true;
+
+        /**
+         * Maximum size, in bytes, of the request body of one Consul transaction. Defaults to {@code 524288} (512 KiB),
+         * Consul's {@code txn_max_req_len}: Consul answers 413 above it. Larger imports are split in several
+         * transactions, and a single value that does not fit makes the run fail before anything is written. Only change
+         * it together with the setting of your Consul agents.
+         */
+        @Min(1024)
+        private long maxTxnBytes = 524_288;
 
         /**
          * @return Path by concatenating {@code kv.path} and {@code kv.version} if present
