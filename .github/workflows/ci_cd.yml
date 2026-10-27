@@ -44,6 +44,17 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      # Whether a build is a release comes from the version in build.gradle.kts, not from the tag: without this check a
+      # release published from a commit that still has the previous SNAPSHOT version goes green and publishes nothing
+      - name: Check that the tag matches the project version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version=$(./gradlew -q properties --property version | sed -n 's/^version: //p')
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::The tag is $GITHUB_REF_NAME but the project version is '$version': set the version in build.gradle.kts and publish the release from that commit"
+            exit 1
+          fi
+
       - name: Compile
         run: ./gradlew classes
 
