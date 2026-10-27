@@ -6,7 +6,13 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +48,50 @@ class RepositoryDirectoryProviderTest {
         assertThat(result).isNotNull();
         assertThat(result.getFileName()).hasToString("repo");
         assertThat(result.getParent()).hasParentRaw(tempDir);
+    }
+
+    @Test
+    void shouldNotLeaveTemporaryDirectoriesBehind_whenSeveralThreadsAskAtTheSameTime() throws Exception {
+        // given
+        given(gitProperties.getLocalPath()).willReturn(tempDir);
+        given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
+        final var threads = 32;
+        final var start = new CountDownLatch(1);
+
+        // when - every thread creates its directory before it knows whether it won the race
+        final var paths = new ArrayList<Path>();
+        try (var executor = Executors.newFixedThreadPool(threads)) {
+            final var calls = new ArrayList<Future<Path>>();
+            for (var i = 0; i < threads; i++) {
+                calls.add(executor.submit(() -> {
+                    start.await();
+                    return provider.getRepository();
+                }));
+            }
+            start.countDown();
+            for (final var call : calls) {
+                paths.add(call.get(30, TimeUnit.SECONDS));
+            }
+        }
+
+        // then - one repository for everybody, and the temporary directories of the losers are gone
+        assertThat(paths).containsOnly(paths.get(0));
+        try (var children = Files.list(tempDir)) {
+            assertThat(children.filter(path -> path.getFileName().toString().startsWith("consul-populate-")))
+                    .containsExactly(paths.get(0).getParent());
+        }
+    }
+
+    @Test
+    void shouldExposeTheWorkingDirectoryOnlyOnceTheRepositoryWasRequested() {
+        // given
+        given(gitProperties.getLocalPath()).willReturn(tempDir);
+        given(gitProperties.getUri()).willReturn("https://github.com/user/repo.git");
+
+        // when / then - before the first request nothing exists, so there is nothing to delete
+        assertThat(provider.getWorkingDirectory()).isEmpty();
+        var repository = provider.getRepository();
+        assertThat(provider.getWorkingDirectory()).contains(repository.getParent());
     }
 
     @Test

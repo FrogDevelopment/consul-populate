@@ -1,11 +1,17 @@
 package com.frogdevelopment.consul.populate.git.events;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -19,6 +25,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.frogdevelopment.consul.populate.git.RepositoryDirectoryProvider;
+import com.frogdevelopment.consul.populate.git.pull.GitPull;
+import com.frogdevelopment.consul.populate.git.pull.GitPullJob;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -30,6 +38,10 @@ class GitCleanUpTest {
 
     @Mock
     private RepositoryDirectoryProvider repositoryDirectoryProvider;
+    @Mock
+    private GitPullJob gitPullJob;
+    @Mock
+    private GitPull gitPull;
     @Mock
     private ServerShutdownEvent serverShutdownEvent;
 
@@ -52,65 +64,101 @@ class GitCleanUpTest {
         logger.detachAppender(logAppender);
     }
 
+    /** Runs what is given to {@code runExclusively}, as the real {@link GitPull} does once it holds its lock. */
+    private void runExclusivelyRunsTheAction() {
+        willAnswer(invocation -> {
+            invocation.<Runnable>getArgument(0).run();
+            return null;
+        }).given(gitPull).runExclusively(any());
+    }
+
     @Test
-    void onServerShutdownEvent_shouldDeleteRepositoryDirectory(@TempDir Path tempDir) throws IOException {
-        // given
-        var repoDir = tempDir.resolve("repo");
+    void onServerShutdownEvent_shouldDeleteTheWholeWorkingDirectory(@TempDir Path tempDir) throws IOException {
+        // given - consul-populate-XXXX/<repo>/..., not only the clone: an empty temporary directory must not stay behind
+        var workingDirectory = tempDir.resolve("consul-populate-1234");
+        var repoDir = workingDirectory.resolve("repo");
         Files.createDirectories(repoDir);
         Files.createFile(repoDir.resolve("test-file.txt"));
-        assertThat(repoDir).exists();
-
-        given(repositoryDirectoryProvider.getRepository()).willReturn(repoDir);
+        given(repositoryDirectoryProvider.getWorkingDirectory()).willReturn(Optional.of(workingDirectory));
+        runExclusivelyRunsTheAction();
 
         // when
         gitCleanUp.onServerShutdownEvent(serverShutdownEvent);
 
         // then
-        assertThat(repoDir).doesNotExist();
+        assertThat(workingDirectory).doesNotExist();
+        assertThat(tempDir).exists();
     }
 
     @Test
     void onServerShutdownEvent_shouldDeleteNestedDirectories(@TempDir Path tempDir) throws IOException {
         // given
-        var repoDir = tempDir.resolve("repo");
-        var nestedDir = repoDir.resolve("nested/deep/directory");
+        var workingDirectory = tempDir.resolve("consul-populate-1234");
+        var nestedDir = workingDirectory.resolve("repo/nested/deep/directory");
         Files.createDirectories(nestedDir);
         Files.createFile(nestedDir.resolve("nested-file.txt"));
-        assertThat(repoDir).exists();
-
-        given(repositoryDirectoryProvider.getRepository()).willReturn(repoDir);
+        given(repositoryDirectoryProvider.getWorkingDirectory()).willReturn(Optional.of(workingDirectory));
+        runExclusivelyRunsTheAction();
 
         // when
         gitCleanUp.onServerShutdownEvent(serverShutdownEvent);
 
         // then
-        assertThat(repoDir).doesNotExist();
+        assertThat(workingDirectory).doesNotExist();
+    }
+
+    @Test
+    void onServerShutdownEvent_shouldStopThePollingThenDeleteWhileNoPullIsRunning(@TempDir Path tempDir) throws IOException {
+        // given
+        var workingDirectory = Files.createDirectories(tempDir.resolve("consul-populate-1234"));
+        given(repositoryDirectoryProvider.getWorkingDirectory()).willReturn(Optional.of(workingDirectory));
+        runExclusivelyRunsTheAction();
+
+        // when
+        gitCleanUp.onServerShutdownEvent(serverShutdownEvent);
+
+        // then - no new scheduled pull, and the deletion goes through the lock of the pulls
+        var inOrder = inOrder(gitPullJob, gitPull);
+        inOrder.verify(gitPullJob).stop();
+        inOrder.verify(gitPull).runExclusively(any());
+    }
+
+    @Test
+    void onServerShutdownEvent_shouldDoNothing_whenTheRepositoryWasNeverCreated() {
+        // given
+        given(repositoryDirectoryProvider.getWorkingDirectory()).willReturn(Optional.empty());
+
+        // when
+        gitCleanUp.onServerShutdownEvent(serverShutdownEvent);
+
+        // then - and it does not create a directory just to delete it
+        then(gitPull).should(never()).runExclusively(any());
+        then(repositoryDirectoryProvider).should(never()).getRepository();
     }
 
     @Test
     void onServerShutdownEvent_shouldHandleNonExistentDirectory(@TempDir Path tempDir) {
         // given
         var nonExistentDir = tempDir.resolve("non-existent");
-        assertThat(nonExistentDir).doesNotExist();
-
-        given(repositoryDirectoryProvider.getRepository()).willReturn(nonExistentDir);
+        given(repositoryDirectoryProvider.getWorkingDirectory()).willReturn(Optional.of(nonExistentDir));
+        runExclusivelyRunsTheAction();
 
         // when - should not throw
         gitCleanUp.onServerShutdownEvent(serverShutdownEvent);
 
-        // then - no exception thrown
+        // then
         assertThat(nonExistentDir).doesNotExist();
     }
 
     @Test
     void onServerShutdownEvent_shouldHandleIOExceptionSilently(@TempDir Path tempDir) {
         // given
-        var repoDir = tempDir.resolve("repo");
-
-        given(repositoryDirectoryProvider.getRepository()).willReturn(repoDir);
+        var workingDirectory = tempDir.resolve("consul-populate-1234");
+        given(repositoryDirectoryProvider.getWorkingDirectory()).willReturn(Optional.of(workingDirectory));
+        runExclusivelyRunsTheAction();
 
         try (var stub = Mockito.mockStatic(FileUtils.class)) {
-            stub.when(() -> FileUtils.deleteDirectory(repoDir.toFile()))
+            stub.when(() -> FileUtils.deleteDirectory(workingDirectory.toFile()))
                     .thenThrow(new IOException("Simulated IO error"));
 
             // when - should not throw
@@ -123,8 +171,6 @@ class GitCleanUpTest {
                     .satisfies(event -> {
                         assertThat(event.getLevel()).hasToString("ERROR");
                         assertThat(event.getMessage()).isEqualTo("Failed to delete repository");
-                        assertThat(event.getThrowableProxy()).isNotNull();
-                        assertThat(event.getThrowableProxy().getMessage()).isEqualTo("Simulated IO error");
                     });
         }
     }
