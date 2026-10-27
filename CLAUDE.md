@@ -55,8 +55,15 @@ ConsulPopulateCommand (CLI) / GitEndpoint (server)
 ### Key design decisions
 
 - **Atomic transactions:** Consul writes (SET + DELETE for removed keys) are batched into `TxnRequest`s of at most 64
-  operations (Consul's limit). Each transaction is atomic; above 64 operations atomicity holds per chunk only, and the
-  first failed chunk aborts the run with an exception.
+  operations and of at most `consul.kv.max-txn-bytes` (default 524288, Consul's `txn_max_req_len`, above which Consul
+  answers 413). The size is measured on the exact JSON the client sends, not estimated, and the keys are sorted so the
+  chunks are the same on every run. Each transaction is atomic; across chunks atomicity does not hold, and the first
+  failed chunk aborts the run with an exception. A value that can never fit fails the run, and the dry run, before
+  anything is written.
+- **Untrusted and empty input:** `FilesImporter.confineTo(dir)` ignores files that resolve outside `dir`; git mode sets
+  it to the clone (anyone with push access could commit a symlink to a file of the server), files mode does not,
+  because the files of a Kubernetes ConfigMap are symlinks. An import that yields no key (every file empty) fails
+  instead of pruning everything under the path, and two files that map to the same key (`a.yaml`, `a.yml`) fail.
 - **Sealed `FilesImporter`:** restricted to `YamlFilesImporter`, `JsonFilesImporter`, `PropertiesFilesImporter`; new
   formats require adding a permitted subclass.
 - **Async → sync bridge:** `VertxUtils.toBlocking()` wraps Vertx `CompletionStage` for the CLI path. Don't introduce
@@ -77,14 +84,17 @@ ConsulPopulateCommand (CLI) / GitEndpoint (server)
 
 Consul connection: `consul.host/port/uri/secured/acl-token/dc/timeout` (timeout defaults to 30 s, `0` disables it)  
 KV path: `consul.kv.prefix` (default `config`), `consul.kv.version` (optional path segment), `consul.kv.prune`
-(default `true`: delete the keys under the path that are not in the source)  
+(default `true`: delete the keys under the path that are not in the source), `consul.kv.max-txn-bytes`  
 Files mode: `consul.files.format` (YAML|JSON|PROPERTIES), `consul.files.root-path`, `consul.files.target`  
 Git mode: `consul.git.uri`, `consul.git.token` (preferred) or `username/password`, `consul.git.branch`,
 `consul.git.ssl-verify` (default `true`; `false` accepts any certificate, applied by `GitTransportConfigCallback` to
 the clone and the fetch because JGit only reads `http.sslVerify` from a repository config that does not exist yet),
+`consul.git.clean-up` (default `true`: the clone is deleted at shutdown, after the running pull),
 `consul.git.poll-enabled`, `consul.git.poll-interval`, `consul.git.webhook.type` (GITHUB|BITBUCKET|CUSTOM),
 `consul.git.webhook.secret` (required when a webhook is configured, unless `consul.git.webhook.allow-unsigned=true`;
-`WebhookSecretValidator` stops the startup otherwise)
+`WebhookSecretValidator` stops the startup otherwise), `consul.git.webhook.response-timeout` (default 8 s: how long a
+webhook request waits for its pull before answering 202 and letting it finish). Credentials are given to each
+transport by `GitTransportConfigCallback`, never as the JVM-wide `CredentialsProvider` default.
 
 ### Git server endpoints
 
