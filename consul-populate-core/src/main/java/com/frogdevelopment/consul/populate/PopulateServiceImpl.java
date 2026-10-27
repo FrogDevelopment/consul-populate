@@ -5,6 +5,7 @@ import static com.frogdevelopment.consul.populate.VertxUtils.toBlocking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -41,6 +42,9 @@ class PopulateServiceImpl implements PopulateService {
 
     // Consul transaction API limit
     static final int MAX_OPERATIONS_PER_TXN = 64;
+
+    // the brackets of the JSON array that is the body of a transaction
+    private static final int EMPTY_BODY_BYTES = 2;
 
     @Override
     public void populate(final boolean dryRun) {
@@ -80,7 +84,9 @@ class PopulateServiceImpl implements PopulateService {
                 .map(toDeleteOperation())
                 .forEach(operations::add);
 
-        final var txnCount = (operations.size() + MAX_OPERATIONS_PER_TXN - 1) / MAX_OPERATIONS_PER_TXN;
+        // split before writing anything, so that a value that cannot be sent fails the run (and the dry run) up front
+        final var transactions = toTransactions(operations, globalProperties.getKv().getMaxTxnBytes());
+        final var txnCount = transactions.size();
         if (dryRun) {
             logPlan(configsToImport.keySet(), keysToDelete, txnCount);
             return;
@@ -92,14 +98,9 @@ class PopulateServiceImpl implements PopulateService {
         }
         log.info("Exporting data to consul ({} operations in {} transaction(s))", operations.size(), txnCount);
 
-        // Consul transactions are limited to MAX_OPERATIONS_PER_TXN operations each
-        for (var i = 0; i < operations.size(); i += MAX_OPERATIONS_PER_TXN) {
-            final var chunk = operations.subList(i, Math.min(i + MAX_OPERATIONS_PER_TXN, operations.size()));
-            final var txnRequest = new TxnRequest();
-            chunk.forEach(txnRequest::addOperation);
-
-            final var result = toBlocking(consulClient.transaction(txnRequest));
-            final var txnNumber = (i / MAX_OPERATIONS_PER_TXN) + 1;
+        for (var i = 0; i < txnCount; i++) {
+            final var result = toBlocking(consulClient.transaction(transactions.get(i)));
+            final var txnNumber = i + 1;
             if (result.getErrorsSize() > 0) {
                 // each transaction is atomic, but earlier ones are already committed: stop rather than leave more gaps
                 throw new IllegalStateException("Transaction %d/%d failed, %d operation(s) in error:%n\t- %s".formatted(
@@ -113,6 +114,57 @@ class PopulateServiceImpl implements PopulateService {
             }
             log.info("Transaction {}/{} succeeded: {} result(s)", txnNumber, txnCount, result.getResultsSize());
         }
+    }
+
+    /**
+     * Splits the operations in transactions that Consul accepts: at most {@link #MAX_OPERATIONS_PER_TXN} operations, and
+     * a request body of at most {@code maxBytes} (Consul's {@code txn_max_req_len}, 512 KiB by default, answers 413
+     * above). The body is the exact JSON the client sends, so the size is measured, not estimated.
+     *
+     * @throws IllegalStateException if a single operation is larger than {@code maxBytes}: it could never be sent
+     */
+    static List<TxnRequest> toTransactions(final List<TxnOperation> operations, final long maxBytes) {
+        final var transactions = new ArrayList<TxnRequest>();
+        var current = new TxnRequest();
+        var currentCount = 0;
+        var currentBytes = EMPTY_BODY_BYTES;
+
+        for (final var operation : operations) {
+            final var operationBytes = encodedSize(operation);
+            if (EMPTY_BODY_BYTES + operationBytes > maxBytes) {
+                throw new IllegalStateException(("The key '%s' is too large for a Consul transaction: %d bytes once "
+                        + "encoded, the limit is %d (Consul's txn_max_req_len, see consul.kv.max-txn-bytes)")
+                        .formatted(((TxnKVOperation) operation).getKey(), EMPTY_BODY_BYTES + operationBytes, maxBytes));
+            }
+
+            // operations are separated by a comma
+            final var addedBytes = currentCount == 0 ? operationBytes : operationBytes + 1;
+            if (currentCount > 0 && (currentCount == MAX_OPERATIONS_PER_TXN || currentBytes + addedBytes > maxBytes)) {
+                transactions.add(current);
+                current = new TxnRequest();
+                currentCount = 0;
+                currentBytes = EMPTY_BODY_BYTES;
+            }
+            currentBytes += currentCount == 0 ? operationBytes : operationBytes + 1;
+            current.addOperation(operation);
+            currentCount++;
+        }
+
+        if (currentCount > 0) {
+            transactions.add(current);
+        }
+        return transactions;
+    }
+
+    /**
+     * @return the size of the request body of a transaction, as the client builds it
+     */
+    static int bodySize(final TxnRequest request) {
+        return request.toJson().getJsonArray("operations").encode().getBytes(StandardCharsets.UTF_8).length;
+    }
+
+    private static int encodedSize(final TxnOperation operation) {
+        return bodySize(new TxnRequest().addOperation(operation)) - EMPTY_BODY_BYTES;
     }
 
     private static void logPlan(final Collection<String> keysToSet, final Collection<String> keysToDelete,

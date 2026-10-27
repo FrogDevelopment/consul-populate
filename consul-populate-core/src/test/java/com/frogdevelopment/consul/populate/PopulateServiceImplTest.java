@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -265,6 +266,54 @@ class PopulateServiceImplTest {
         assertThat(transactions.get(1)).isEqualTo(keys.subList(64, 70).stream().map(k -> "config/" + k).toList());
         assertThat(transactions.get(2)).isEqualTo(transactions.get(0));
         assertThat(transactions.get(3)).isEqualTo(transactions.get(1));
+    }
+
+    @Test
+    void should_split_transactions_to_stay_under_the_size_limit() {
+        // given - 10 values of about 1.4 KB once encoded, and a limit that only lets two of them through
+        final var value = "x".repeat(1_000);
+        given(dataImporter.execute()).willReturn(IntStream.range(0, 10).boxed()
+                .collect(Collectors.toMap(i -> "key-%02d".formatted(i), i -> value)));
+        kv.setMaxTxnBytes(4_000);
+
+        // when
+        populateService.populate(false);
+
+        // then - far fewer than 64 operations per transaction, none over the limit, nothing lost
+        verify(consulClient, atLeast(4)).transaction(txnRequestCaptor.capture());
+        final var requests = txnRequestCaptor.getAllValues();
+        requests.forEach(request -> assertThat(PopulateServiceImpl.bodySize(request)).isLessThanOrEqualTo(4_000));
+        assertThat(requests.stream().mapToInt(TxnRequest::getOperationsSize).sum()).isEqualTo(10);
+    }
+
+    @Test
+    void should_fail_before_writing_anything_when_a_value_is_larger_than_the_size_limit() {
+        // given - the second key can never be sent
+        kv.setMaxTxnBytes(2_000);
+        given(dataImporter.execute()).willReturn(Map.of("small", "value", "too-large", "x".repeat(5_000)));
+
+        // when
+        var caught = catchThrowable(() -> populateService.populate(false));
+
+        // then - nothing was sent, not even the small key
+        assertThat(caught)
+                .isExactlyInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("config/too-large")
+                .hasMessageContaining("consul.kv.max-txn-bytes");
+        verify(consulClient, never()).transaction(any());
+    }
+
+    @Test
+    void should_fail_the_dry_run_too_when_a_value_is_larger_than_the_size_limit() {
+        // given
+        kv.setMaxTxnBytes(2_000);
+        given(dataImporter.execute()).willReturn(Map.of("too-large", "x".repeat(5_000)));
+
+        // when
+        var caught = catchThrowable(() -> populateService.populate(true));
+
+        // then
+        assertThat(caught).isExactlyInstanceOf(IllegalStateException.class).hasMessageContaining("too large");
     }
 
     @Test
