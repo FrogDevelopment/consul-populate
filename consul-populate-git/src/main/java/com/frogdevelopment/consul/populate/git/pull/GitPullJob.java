@@ -41,9 +41,11 @@ public class GitPullJob {
 
     /**
      * Starts the pull job if not already running.
-     * This method is idempotent - calling it multiple times has no effect if already started.
+     * This method is idempotent - calling it multiple times has no effect if already started. It is synchronized with
+     * {@link #stop()}: two concurrent calls could otherwise both see no running job and schedule it twice, leaving a job
+     * that nothing can cancel.
      */
-    public void start() {
+    public synchronized void start() {
         final var existingFuture = scheduledFutureRef.get();
         if (existingFuture != null && !existingFuture.isDone()) {
             log.debug("ScheduledPoll job already running, ignoring start request");
@@ -71,7 +73,7 @@ public class GitPullJob {
      * Stops the pull job if currently running.
      * This method is idempotent - calling it multiple times has no effect if already stopped.
      */
-    public void stop() {
+    public synchronized void stop() {
         if (stopping.get()) {
             log.debug("ScheduledPoll job already stopped, ignoring stop request");
             return;
@@ -81,7 +83,8 @@ public class GitPullJob {
         stopping.set(true);
         final var scheduledFuture = scheduledFutureRef.get();
         if (scheduledFuture != null) {
-            scheduledFuture.cancel(true);
+            // do not interrupt: a pull that is running (or the population it leads to) must end, only the next ones stop
+            scheduledFuture.cancel(false);
         }
     }
 
