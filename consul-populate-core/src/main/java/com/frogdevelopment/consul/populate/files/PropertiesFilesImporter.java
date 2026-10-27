@@ -46,7 +46,12 @@ public final class PropertiesFilesImporter extends FilesImporter {
     protected SequencedMap<String, Object> readFile(@NonNull final File file) throws IOException {
         try (final var reader = Files.newBufferedReader(file.toPath())) {
             final var properties = new Properties();
-            properties.load(reader);
+            try {
+                properties.load(reader);
+            } catch (final IllegalArgumentException e) {
+                // a malformed \\uxxxx escape
+                throw new IOException("Invalid properties in '%s': %s".formatted(file, e.getMessage()), e);
+            }
             return properties.entrySet()
                     .stream()
                     .collect(Collectors.toMap(entry -> entry.getKey().toString(), Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));

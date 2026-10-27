@@ -49,10 +49,16 @@ public final class JsonFilesImporter extends FilesImporter {
     @Nullable
     @Override
     protected SequencedMap<String, Object> readFile(@NonNull final File file) throws IOException {
-        try (final var reader = Files.newBufferedReader(file.toPath())) {
-            final var typeRef = new TypeReference<LinkedHashMap<String, Object>>() {
-            };
-            return objectMapper.readValue(reader, typeRef);
+        final var content = Files.readString(file.toPath());
+        if (content.isBlank()) {
+            // like an empty YAML file: skipped, instead of failing the whole run
+            return null;
+        }
+        try {
+            return objectMapper.readValue(content, new TypeReference<LinkedHashMap<String, Object>>() {
+            });
+        } catch (final JsonProcessingException e) {
+            throw new IOException("Invalid JSON in '%s': %s".formatted(file, e.getOriginalMessage()), e);
         }
     }
 
