@@ -136,7 +136,7 @@ public class GitPull {
     private void fetchAndReset() throws GitAPIException {
         git.fetch()
                 .setRemote(Constants.DEFAULT_REMOTE_NAME)
-                .setTransportConfigCallback(new GitTransportConfigCallback(gitProperties.isSslVerify()))
+                .setTransportConfigCallback(new GitTransportConfigCallback(gitProperties))
                 .call();
         git.reset()
                 .setMode(ResetType.HARD)
