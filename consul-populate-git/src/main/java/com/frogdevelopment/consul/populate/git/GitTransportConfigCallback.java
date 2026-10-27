@@ -2,15 +2,23 @@ package com.frogdevelopment.consul.populate.git;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Objects;
 
 import org.eclipse.jgit.api.TransportConfigCallback;
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.http.HttpConnection;
 import org.eclipse.jgit.transport.http.JDKHttpConnectionFactory;
 
+import io.micronaut.core.util.StringUtils;
+
 /**
- * Applies {@code consul.git.ssl-verify} to the transports of the clone and of the fetch.
+ * Applies the credentials and {@code consul.git.ssl-verify} to the transports of the clone and of the fetch.
+ *
+ * <p>The credentials are given to each transport instead of being set as the default of the JVM
+ * ({@code CredentialsProvider.setDefault}), which any other use of JGit in the same process would inherit.
  *
  * <p>JGit reads {@code http.sslVerify} from the configuration of the repository, which does not exist yet for the
  * initial clone, so it cannot be driven by configuration alone. When the verification is turned off, the HTTP transport
@@ -23,19 +31,46 @@ import org.eclipse.jgit.transport.http.JDKHttpConnectionFactory;
 public final class GitTransportConfigCallback implements TransportConfigCallback {
 
     private final boolean sslVerify;
+    private final CredentialsProvider credentialsProvider;
 
     /**
-     * @param sslVerify {@code false} to accept any TLS certificate of the git server
+     * @param properties where the credentials come from (a token, or a user name with an optional password) and whether
+     *                   the TLS certificate of the git server is verified
      */
-    public GitTransportConfigCallback(final boolean sslVerify) {
-        this.sslVerify = sslVerify;
+    public GitTransportConfigCallback(final GitProperties properties) {
+        this.sslVerify = properties.isSslVerify();
+        this.credentialsProvider = credentialsOf(properties);
+    }
+
+    /**
+     * @return {@code true} when no credentials are configured: a public repository is accessed anonymously
+     */
+    public boolean isAnonymous() {
+        return credentialsProvider == null;
     }
 
     @Override
     public void configure(final Transport transport) {
+        if (credentialsProvider != null) {
+            transport.setCredentialsProvider(credentialsProvider);
+        }
         if (!sslVerify && transport instanceof TransportHttp http) {
             http.setHttpConnectionFactory(new TrustAllConnectionFactory());
         }
+    }
+
+    private static CredentialsProvider credentialsOf(final GitProperties properties) {
+        final var token = properties.getToken();
+        if (StringUtils.isNotEmpty(token)) {
+            return new UsernamePasswordCredentialsProvider(token, "");
+        }
+
+        final var username = properties.getUsername();
+        if (StringUtils.isNotEmpty(username)) {
+            // JGit's (String, String) constructor rejects a null password
+            return new UsernamePasswordCredentialsProvider(username, Objects.requireNonNullElse(properties.getPassword(), ""));
+        }
+        return null;
     }
 
     /**

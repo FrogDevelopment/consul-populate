@@ -1,6 +1,7 @@
 package com.frogdevelopment.consul.populate.git;
 
 import lombok.Data;
+import lombok.ToString;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -37,6 +38,7 @@ public class GitProperties {
     /**
      * Personal access token for authentication (preferred over username/password)
      */
+    @ToString.Exclude
     private String token;
 
     /**
@@ -47,6 +49,7 @@ public class GitProperties {
     /**
      * Password for basic authentication
      */
+    @ToString.Exclude
     private String password;
 
     /**
@@ -123,6 +126,7 @@ public class GitProperties {
          * the application refuses to start without it.
          */
         @Nullable
+        @ToString.Exclude
         private String secret;
 
         /**

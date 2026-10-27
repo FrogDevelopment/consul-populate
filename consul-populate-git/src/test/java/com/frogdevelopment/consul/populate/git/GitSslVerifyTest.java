@@ -2,22 +2,14 @@ package com.frogdevelopment.consul.populate.git;
 
 import static com.frogdevelopment.consul.populate.git.pull.Status.FAILURE;
 import static com.frogdevelopment.consul.populate.git.pull.Trigger.SCHEDULED;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 
 import org.eclipse.jgit.api.Git;
@@ -31,8 +23,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 import com.frogdevelopment.consul.populate.PopulateService;
 import com.frogdevelopment.consul.populate.git.pull.GitPull;
-import com.sun.net.httpserver.HttpsConfigurator;
-import com.sun.net.httpserver.HttpsServer;
 
 /**
  * Talks TLS for real: a local HTTPS server presents a self-signed certificate, which the JVM does not trust. The server
@@ -46,54 +36,21 @@ class GitSslVerifyTest {
     @TempDir
     Path tempDir;
 
-    private static final AtomicInteger REQUESTS = new AtomicInteger();
-    private static HttpsServer server;
-    private static String repositoryUrl;
+    private static SelfSignedHttpsServer server;
 
     @BeforeAll
     static void startHttpsServerWithASelfSignedCertificate() throws Exception {
-        final var keystore = serverDir.resolve("keystore.p12");
-        final var keytool = Path.of(System.getProperty("java.home"), "bin", "keytool").toString();
-        final var process = new ProcessBuilder(keytool, "-genkeypair", "-alias", "test", "-keyalg", "RSA",
-                "-keysize", "2048", "-validity", "2", "-dname", "CN=localhost", "-ext", "SAN=dns:localhost,ip:127.0.0.1",
-                "-storetype", "PKCS12", "-keystore", keystore.toString(), "-storepass", "changeit", "-keypass",
-                "changeit")
-                .redirectErrorStream(true)
-                .start();
-        final var output = new String(process.getInputStream().readAllBytes(), UTF_8);
-        assertThat(process.waitFor()).as("keytool: %s", output).isZero();
-
-        final var store = KeyStore.getInstance("PKCS12");
-        try (var in = Files.newInputStream(keystore)) {
-            store.load(in, "changeit".toCharArray());
-        }
-        final var keyManagers = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagers.init(store, "changeit".toCharArray());
-        final var sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(keyManagers.getKeyManagers(), null, null);
-
-        server = HttpsServer.create(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0), 0);
-        server.setHttpsConfigurator(new HttpsConfigurator(sslContext));
-        server.createContext("/", exchange -> {
-            REQUESTS.incrementAndGet();
-            final var body = "not found".getBytes(UTF_8);
-            exchange.sendResponseHeaders(404, body.length);
-            try (var out = exchange.getResponseBody()) {
-                out.write(body);
-            }
-        });
-        server.start();
-        repositoryUrl = "https://127.0.0.1:" + server.getAddress().getPort() + "/org/repo.git";
+        server = SelfSignedHttpsServer.start(serverDir, false);
     }
 
     @AfterAll
     static void stopHttpsServer() {
-        server.stop(0);
+        server.close();
     }
 
     @BeforeEach
     void resetRequestCounter() {
-        REQUESTS.set(0);
+        server.reset();
     }
 
     @Test
@@ -104,7 +61,7 @@ class GitSslVerifyTest {
         // then - the handshake fails, so nothing reaches the server
         assertThat(thrown).isInstanceOf(GitAPIException.class);
         assertThat(causesOf(thrown)).anyMatch(SSLException.class::isInstance);
-        assertThat(REQUESTS).hasValue(0);
+        assertThat(server.requests()).isZero();
     }
 
     @Test
@@ -115,7 +72,7 @@ class GitSslVerifyTest {
         // then - the TLS handshake went through; the failure is the server's 404
         assertThat(thrown).isInstanceOf(GitAPIException.class);
         assertThat(causesOf(thrown)).noneMatch(SSLException.class::isInstance);
-        assertThat(REQUESTS.get()).isPositive();
+        assertThat(server.requests()).isPositive();
     }
 
     @Test
@@ -126,7 +83,7 @@ class GitSslVerifyTest {
 
             // then
             assertThat(status).isEqualTo(FAILURE);
-            assertThat(REQUESTS).hasValue(0);
+            assertThat(server.requests()).isZero();
         }
     }
 
@@ -138,7 +95,7 @@ class GitSslVerifyTest {
 
             // then
             assertThat(status).isEqualTo(FAILURE);
-            assertThat(REQUESTS.get()).isPositive();
+            assertThat(server.requests()).isPositive();
         }
     }
 
@@ -152,7 +109,7 @@ class GitSslVerifyTest {
     private Git repositoryWithOrigin() throws Exception {
         final var git = Git.init().setDirectory(tempDir.resolve("local").toFile()).call();
         final var config = git.getRepository().getConfig();
-        config.setString("remote", Constants.DEFAULT_REMOTE_NAME, "url", repositoryUrl);
+        config.setString("remote", Constants.DEFAULT_REMOTE_NAME, "url", server.repositoryUrl());
         config.setString("remote", Constants.DEFAULT_REMOTE_NAME, "fetch", "+refs/heads/*:refs/remotes/origin/*");
         config.save();
         return git;
@@ -160,7 +117,7 @@ class GitSslVerifyTest {
 
     private static GitProperties properties(final boolean sslVerify) {
         final var properties = new GitProperties();
-        properties.setUri(repositoryUrl);
+        properties.setUri(server.repositoryUrl());
         properties.setBranch("main");
         properties.setSslVerify(sslVerify);
         return properties;

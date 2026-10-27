@@ -41,44 +41,26 @@ public class GitFactory {
     @Bean(preDestroy = "close")
     public Git git(final GitProperties gitProperties,
                    final RepositoryDirectoryProvider repositoryDirectoryProvider) throws GitAPIException {
-        createCredentialsProvider(gitProperties).ifPresent(CredentialsProvider::setDefault);
         final var repositoryDirectory = repositoryDirectoryProvider.getRepository();
 
-        final var sslVerify = gitProperties.isSslVerify();
-        if (!sslVerify) {
+        final var transportConfig = new GitTransportConfigCallback(gitProperties);
+        if (transportConfig.isAnonymous()) {
+            log.info("No credentials configured, cloning anonymously");
+        }
+        if (!gitProperties.isSslVerify()) {
             log.warn("consul.git.ssl-verify=false: the TLS certificate of the git server is NOT verified, so the "
                     + "connection can be intercepted. Prefer adding the certificate to the JVM trust store.");
         }
 
-        log.debug("Cloning repository [{}]", gitProperties.getUri());
+        // never log the URI as it is: it may carry the user and the token
+        log.debug("Cloning repository [{}]", GitUris.mask(gitProperties.getUri()));
         return Git.cloneRepository()
                 .setURI(gitProperties.getUri())
                 .setDirectory(repositoryDirectory.toFile())
                 .setGitDir(repositoryDirectory.resolve(Constants.DOT_GIT).toFile())
                 .setBranch(gitProperties.getBranch())
                 .setRemote(Constants.DEFAULT_REMOTE_NAME)
-                .setTransportConfigCallback(new GitTransportConfigCallback(sslVerify))
+                .setTransportConfigCallback(transportConfig)
                 .call();
     }
-
-    /**
-     * @return the credentials to use, or empty to clone anonymously (public repository)
-     */
-    private static Optional<CredentialsProvider> createCredentialsProvider(final GitProperties gitProperties) {
-        final var token = gitProperties.getToken();
-        if (StringUtils.isNotEmpty(token)) {
-            return Optional.of(new UsernamePasswordCredentialsProvider(token, ""));
-        }
-
-        final var username = gitProperties.getUsername();
-        if (StringUtils.isNotEmpty(username)) {
-            // JGit's (String, String) constructor rejects a null password
-            return Optional.of(new UsernamePasswordCredentialsProvider(
-                    username, Objects.requireNonNullElse(gitProperties.getPassword(), "")));
-        }
-
-        log.info("No credentials configured, cloning anonymously");
-        return Optional.empty();
-    }
-
 }

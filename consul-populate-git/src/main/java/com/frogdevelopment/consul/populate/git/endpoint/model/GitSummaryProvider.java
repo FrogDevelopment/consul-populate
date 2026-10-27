@@ -11,6 +11,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.URIish;
 
 import com.frogdevelopment.consul.populate.git.GitProperties;
+import com.frogdevelopment.consul.populate.git.GitUris;
 import com.frogdevelopment.consul.populate.git.RepositoryDirectoryProvider;
 import com.frogdevelopment.consul.populate.git.pull.GitPull;
 
@@ -89,13 +90,7 @@ public class GitSummaryProvider {
         }
 
         // Mask potential credentials in URI
-        var maskedUri = gitProperties.getUri();
-        try {
-            maskedUri = new URIish(gitProperties.getUri()).setUser(null).setPass(null).toString();
-        } catch (final Exception e) {
-            // keep original uri if masking fails
-            log.warn("Error while masking URI credentials", e);
-        }
+        final var maskedUri = GitUris.mask(gitProperties.getUri());
 
         return new GitSummary.Repo(
                 maskedUri,
