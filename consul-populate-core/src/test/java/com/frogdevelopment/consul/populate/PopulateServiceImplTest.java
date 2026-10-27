@@ -35,6 +35,7 @@ import ch.qos.logback.core.read.ListAppender;
 import io.vertx.core.Future;
 import io.vertx.ext.consul.ConsulClient;
 import io.vertx.ext.consul.TxnError;
+import io.vertx.ext.consul.TxnKVOperation;
 import io.vertx.ext.consul.TxnRequest;
 import io.vertx.ext.consul.TxnResponse;
 
@@ -244,6 +245,29 @@ class PopulateServiceImplTest {
     }
 
     @Test
+    void should_put_the_same_keys_in_the_same_transactions_whatever_the_order_of_the_source() {
+        // given - 70 keys, once in ascending and once in descending order
+        final var ascending = new java.util.LinkedHashMap<String, String>();
+        final var descending = new java.util.LinkedHashMap<String, String>();
+        final var keys = IntStream.range(0, 70).mapToObj(i -> "key-%02d".formatted(i)).toList();
+        keys.forEach(key -> ascending.put(key, "value"));
+        keys.reversed().forEach(key -> descending.put(key, "value"));
+        given(dataImporter.execute()).willReturn(ascending, descending);
+
+        // when
+        populateService.populate(false);
+        populateService.populate(false);
+
+        // then - the first transaction holds the 64 smallest keys both times, the second one the 6 largest
+        verify(consulClient, times(4)).transaction(txnRequestCaptor.capture());
+        final var transactions = txnRequestCaptor.getAllValues().stream().map(PopulateServiceImplTest::keysOf).toList();
+        assertThat(transactions.get(0)).isEqualTo(keys.subList(0, 64).stream().map(k -> "config/" + k).toList());
+        assertThat(transactions.get(1)).isEqualTo(keys.subList(64, 70).stream().map(k -> "config/" + k).toList());
+        assertThat(transactions.get(2)).isEqualTo(transactions.get(0));
+        assertThat(transactions.get(3)).isEqualTo(transactions.get(1));
+    }
+
+    @Test
     void should_stop_and_throw_when_a_transaction_reports_errors() {
         // given — 65 keys → 2 transactions, the first one fails
         given(dataImporter.execute()).willReturn(entriesOfSize(65));
@@ -260,6 +284,10 @@ class PopulateServiceImplTest {
                 .hasMessageContaining("Transaction 1/2 failed")
                 .hasMessageContaining("boom");
         verify(consulClient, times(1)).transaction(any());
+    }
+
+    private static List<String> keysOf(final TxnRequest request) {
+        return request.getOperations().stream().map(operation -> ((TxnKVOperation) operation).getKey()).toList();
     }
 
     private static Map<String, String> entriesOfSize(int count) {
