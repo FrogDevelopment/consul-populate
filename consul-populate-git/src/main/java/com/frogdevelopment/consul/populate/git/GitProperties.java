@@ -131,6 +131,13 @@ public class GitProperties {
         private boolean allowUnsigned = false;
 
         /**
+         * How long a webhook request waits for the pull it triggers (default: 8 seconds). Git providers give up after
+         * about ten seconds and flag the delivery as failed: past this delay the request is answered with 202 and the
+         * pull carries on, its outcome being in {@code GET /git}. Within it, a failed pull is answered with 500.
+         */
+        private Duration responseTimeout = Duration.ofSeconds(8);
+
+        /**
          * Supported git provider types for webhooks.
          */
         public enum GitType {

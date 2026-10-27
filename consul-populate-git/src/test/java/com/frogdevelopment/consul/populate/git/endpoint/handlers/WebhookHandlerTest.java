@@ -9,8 +9,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +67,7 @@ class WebhookHandlerTest {
 
         @BeforeEach
         void setUp() {
-            webhookHandler = new WebhookHandler(gitProperties, objectMapper, gitPull, Optional.empty());
+            webhookHandler = new WebhookHandler(gitProperties, objectMapper, gitPull, Runnable::run, Optional.empty());
         }
 
         @Test
@@ -103,7 +107,7 @@ class WebhookHandlerTest {
         @BeforeEach
         void setUp() {
             given(httpRequest.getHeaders()).willReturn(httpHeaders);
-            webhookHandler = new WebhookHandler(gitProperties, objectMapper, gitPull, Optional.of(payloadHandler));
+            webhookHandler = new WebhookHandler(gitProperties, objectMapper, gitPull, Runnable::run, Optional.of(payloadHandler));
             webhookConfig = new GitProperties.Webhook();
             given(gitProperties.getWebhook()).willReturn(webhookConfig);
             given(payloadHandler.getEventHeaderKey()).willReturn("X-GitHub-Event");
@@ -331,6 +335,52 @@ class WebhookHandlerTest {
                 // then
                 assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
                 then(gitPull).should(never()).pull(any());
+            }
+
+            @Test
+            void handle_shouldReturnServerError_whenThePullThrowsUnexpectedly() throws JsonProcessingException {
+                // given
+                var jsonNode = new ObjectMapper().createObjectNode();
+                given(objectMapper.readTree("body")).willReturn(jsonNode);
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of("refs/heads/main"));
+                given(gitProperties.getBranch()).willReturn("main");
+                given(gitPull.pull(WEBHOOK)).willThrow(new IllegalStateException("boom"));
+
+                // when
+                var response = webhookHandler.handle(httpRequest, "body");
+
+                // then
+                assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.getCode());
+            }
+
+            @Test
+            void handle_shouldAnswerAcceptedWithoutWaiting_whenThePullOutlastsTheResponseTimeout() throws Exception {
+                // given - a pull that only ends when the test lets it, and a provider that gives up after 100 ms
+                webhookConfig.setResponseTimeout(Duration.ofMillis(100));
+                final var executor = Executors.newSingleThreadExecutor();
+                webhookHandler = new WebhookHandler(gitProperties, objectMapper, gitPull, executor, Optional.of(payloadHandler));
+                var jsonNode = new ObjectMapper().createObjectNode();
+                given(objectMapper.readTree("body")).willReturn(jsonNode);
+                given(payloadHandler.extractBranchNames(jsonNode)).willReturn(Set.of("refs/heads/main"));
+                given(gitProperties.getBranch()).willReturn("main");
+                final var release = new CountDownLatch(1);
+                given(gitPull.pull(WEBHOOK)).willAnswer(invocation -> {
+                    release.await(12, TimeUnit.SECONDS);
+                    return SUCCESS;
+                });
+
+                try {
+                    // when
+                    final var started = System.nanoTime();
+                    var response = webhookHandler.handle(httpRequest, "body");
+
+                    // then - accepted, long before the pull is over
+                    assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+                    assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(10));
+                } finally {
+                    release.countDown();
+                    executor.shutdown();
+                }
             }
 
             @Test

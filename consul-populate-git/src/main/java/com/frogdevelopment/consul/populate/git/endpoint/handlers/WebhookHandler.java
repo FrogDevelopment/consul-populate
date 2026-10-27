@@ -1,5 +1,6 @@
 package com.frogdevelopment.consul.populate.git.endpoint.handlers;
 
+import static com.frogdevelopment.consul.populate.git.pull.Status.FAILURE;
 import static com.frogdevelopment.consul.populate.git.pull.Status.SUCCESS;
 import static com.frogdevelopment.consul.populate.git.pull.Trigger.WEBHOOK;
 
@@ -13,11 +14,17 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,11 +32,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.frogdevelopment.consul.populate.git.GitProperties;
 import com.frogdevelopment.consul.populate.git.endpoint.handlers.webhook.WebhookPayloadHandler;
 import com.frogdevelopment.consul.populate.git.pull.GitPull;
+import com.frogdevelopment.consul.populate.git.pull.Status;
 
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.scheduling.TaskExecutors;
 
 /**
  * Handler for processing webhook events from git providers (GitHub, Bitbucket, or custom).
@@ -47,12 +56,14 @@ import io.micronaut.http.HttpStatus;
  *
  * <h2>Response Codes</h2>
  * <ul>
- *   <li>{@code 202 Accepted} - Webhook processed and pull triggered</li>
+ *   <li>{@code 202 Accepted} - Webhook processed and pull succeeded, or still running when the response timeout
+ *   ({@code consul.git.webhook.response-timeout}) elapsed: the outcome is then in {@code GET /git}</li>
  *   <li>{@code 204 No Content} - Valid webhook that is ignored on purpose (other event type, such as GitHub's
  *   {@code ping}, or another branch): providers show a non-2xx delivery as failed</li>
  *   <li>{@code 304 Not Modified} - No webhook is configured</li>
  *   <li>{@code 400 Bad Request} - Missing or invalid payload</li>
  *   <li>{@code 401 Unauthorized} - Signature verification failed or missing when secret is configured</li>
+ *   <li>{@code 500 Internal Server Error} - The pull or the population failed</li>
  *   <li>{@code 501 Not Implemented} - No {@link WebhookPayloadHandler} available for the configured type</li>
  * </ul>
  *
@@ -71,6 +82,8 @@ public class WebhookHandler {
     private final GitProperties gitProperties;
     private final ObjectMapper objectMapper;
     private final GitPull gitPull;
+    @Named(TaskExecutors.BLOCKING)
+    private final Executor executor;
     private final Optional<WebhookPayloadHandler> payloadHandler;
 
     /**
@@ -117,6 +130,28 @@ public class WebhookHandler {
         }
 
         return triggerPullingIfNeeded(stringBody, handler);
+    }
+
+    /**
+     * Runs the pull on the blocking executor and waits for it at most {@code consul.git.webhook.response-timeout}: git
+     * providers give up after about ten seconds and flag the delivery as failed, while a large repository or a slow Consul
+     * can take longer. The pull is not interrupted when the time is over.
+     *
+     * @return the outcome, or empty when the pull is still running
+     */
+    private Optional<Status> pullWithinResponseTimeout() {
+        final var pull = CompletableFuture.supplyAsync(() -> gitPull.pull(WEBHOOK), executor);
+        try {
+            return Optional.of(pull.get(gitProperties.getWebhook().getResponseTimeout().toMillis(), TimeUnit.MILLISECONDS));
+        } catch (final TimeoutException e) {
+            return Optional.empty();
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (final ExecutionException e) {
+            log.error("Unexpected error during the pull triggered by the webhook", e.getCause());
+            return Optional.of(FAILURE);
+        }
     }
 
     private boolean verifySignature(final String givenSignature, final String payload, final String secret) {
@@ -174,7 +209,13 @@ public class WebhookHandler {
             }
 
             if (toPull) {
-                if (gitPull.pull(WEBHOOK) != SUCCESS) {
+                final var status = pullWithinResponseTimeout();
+                if (status.isEmpty()) {
+                    log.info("Webhook triggered a pull for branch {} that is still running: see GET /git for its outcome",
+                            gitProperties.getBranch());
+                    return HttpResponse.accepted();
+                }
+                if (status.get() != SUCCESS) {
                     // a non-2xx lets the git provider flag the delivery as failed and redeliver it
                     log.error("Webhook triggered pull for branch {} failed", gitProperties.getBranch());
                     return HttpResponse.serverError();
