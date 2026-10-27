@@ -63,10 +63,10 @@ public final class PropertiesFilesImporter extends FilesImporter {
         map.forEach((k, v) -> properties.setProperty(k, v.toString()));
         final var sw = new StringWriter();
         properties.store(sw, null);
-        // Properties.store() prepends a "#<timestamp>" comment line and a blank line — strip both
+        // Properties.store() prepends a "#<timestamp>" comment line. Do not strip the result: the whitespace at the end of
+        // the last value belongs to it. Since JDK 18 the entries are written sorted by key, so the output is stable.
         return sw.toString().lines()
                 .filter(line -> !line.startsWith("#"))
-                .collect(Collectors.joining("\n"))
-                .strip();
+                .collect(Collectors.joining("\n"));
     }
 }
