@@ -48,7 +48,9 @@ import io.micronaut.http.HttpStatus;
  * <h2>Response Codes</h2>
  * <ul>
  *   <li>{@code 202 Accepted} - Webhook processed and pull triggered</li>
- *   <li>{@code 304 Not Modified} - Webhook ignored (wrong event type, branch mismatch, or webhook not configured)</li>
+ *   <li>{@code 204 No Content} - Valid webhook that is ignored on purpose (other event type, such as GitHub's
+ *   {@code ping}, or another branch): providers show a non-2xx delivery as failed</li>
+ *   <li>{@code 304 Not Modified} - No webhook is configured</li>
  *   <li>{@code 400 Bad Request} - Missing or invalid payload</li>
  *   <li>{@code 401 Unauthorized} - Signature verification failed or missing when secret is configured</li>
  *   <li>{@code 501 Not Implemented} - No {@link WebhookPayloadHandler} available for the configured type</li>
@@ -94,7 +96,8 @@ public class WebhookHandler {
 
         final var eventType = request.getHeaders().get(handler.getEventHeaderKey());
         if (!handler.getExpectedEventValue().equals(eventType)) {
-            return HttpResponse.notModified();
+            log.debug("Webhook ignored - event type '{}' is not '{}'", eventType, handler.getExpectedEventValue());
+            return HttpResponse.noContent();
         }
 
         if (stringBody == null) {
@@ -181,7 +184,7 @@ public class WebhookHandler {
             } else {
                 log.debug("Webhook ignored - branch mismatch (received: {}, expected: {})",
                         branches, gitProperties.getBranch());
-                return HttpResponse.notModified();
+                return HttpResponse.noContent();
             }
         } catch (final JsonProcessingException e) {
             log.warn("Failed to parse webhook payload: {}", e.getMessage(), e);

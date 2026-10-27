@@ -113,7 +113,7 @@ class WebhookHandlerTest {
         @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = {"ping", "pull_request", "issues"})
-        void handle_shouldReturnNotModified_whenEventTypeInvalid(String eventType) {
+        void handle_shouldReturnNoContent_whenEventTypeIsIgnored(String eventType) {
             // given
             given(httpHeaders.get("X-GitHub-Event")).willReturn(eventType);
 
@@ -121,7 +121,7 @@ class WebhookHandlerTest {
             var response = webhookHandler.handle(httpRequest, "body");
 
             // then
-            assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
+            assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
             then(gitPull).should(never()).pull(any());
         }
 
@@ -269,7 +269,7 @@ class WebhookHandlerTest {
             }
 
             @Test
-            void handle_shouldReturnNotModified_whenBranchDoesNotMatch() throws JsonProcessingException {
+            void handle_shouldReturnNoContent_whenBranchDoesNotMatch() throws JsonProcessingException {
                 // given
                 var jsonNode = new ObjectMapper().createObjectNode().put("ref", "refs/heads/develop");
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
@@ -280,7 +280,7 @@ class WebhookHandlerTest {
                 var response = webhookHandler.handle(httpRequest, "body");
 
                 // then
-                assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
+                assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
                 then(gitPull).should(never()).pull(any());
             }
 
@@ -318,7 +318,7 @@ class WebhookHandlerTest {
             }
 
             @Test
-            void handle_shouldReturnNotModified_whenTheTrackedBranchIsNotAmongTheUpdatedBranches() throws JsonProcessingException {
+            void handle_shouldReturnNoContent_whenTheTrackedBranchIsNotAmongTheUpdatedBranches() throws JsonProcessingException {
                 // given
                 var jsonNode = new ObjectMapper().createObjectNode();
                 given(objectMapper.readTree("body")).willReturn(jsonNode);
@@ -329,7 +329,7 @@ class WebhookHandlerTest {
                 var response = webhookHandler.handle(httpRequest, "body");
 
                 // then
-                assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NOT_MODIFIED.getCode());
+                assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
                 then(gitPull).should(never()).pull(any());
             }
 
