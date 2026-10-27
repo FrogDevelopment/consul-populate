@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -52,11 +53,10 @@ class PopulateServiceImpl implements PopulateService {
         final var kvPath = globalProperties.getKv().getPath();
 
         log.info("Retrieving data to export");
-        // Importing data from configured type
-        final var configsToImport = dataImporter.execute()
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(entry -> kvPath + entry.getKey(), Map.Entry::getValue));
+        // Importing data from configured type. Sorted by key: the transactions, and therefore what a failed run has
+        // already applied, are the same on every run
+        final var configsToImport = new TreeMap<String, String>();
+        dataImporter.execute().forEach((key, value) -> configsToImport.put(kvPath + key, value));
 
         // collect all SET operations
         final var operations = new ArrayList<TxnOperation>();
@@ -70,6 +70,7 @@ class PopulateServiceImpl implements PopulateService {
         if (globalProperties.getKv().isPrune()) {
             keysToDelete = toBlocking(consulClient.getKeys(kvPath)).stream()
                     .filter(Predicate.not(configsToImport::containsKey))
+                    .sorted()
                     .toList();
         } else {
             log.info("consul.kv.prune=false: keys under '{}' that are not in the source are kept", kvPath);
