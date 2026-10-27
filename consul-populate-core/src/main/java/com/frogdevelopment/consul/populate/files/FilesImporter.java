@@ -34,6 +34,22 @@ public abstract sealed class FilesImporter implements DataImporter
     private final Path rootPath;
     private final Path targetPath;
 
+    /** When set, only the files that resolve inside this directory are read; {@code null} reads everything. */
+    private Path confinedTo;
+
+    /**
+     * Restricts the import to the files that really live inside {@code directory}: a symbolic link that points outside
+     * is ignored. Use it when the content is not trusted, for instance a cloned repository where anyone with push access
+     * could otherwise commit {@code application.yaml -> /path/on/the/server} and have the file published to Consul.
+     * Links that stay inside the directory are followed. It is not applied by default, because the configuration
+     * directory of a Kubernetes ConfigMap or Secret is made of symbolic links.
+     *
+     * @param directory the directory the files must resolve into
+     */
+    public void confineTo(final Path directory) {
+        this.confinedTo = directory;
+    }
+
     @NonNull
     @Override
     public Map<String, String> execute() {
@@ -119,7 +135,22 @@ public abstract sealed class FilesImporter implements DataImporter
             return false;
         }
         final var extension = FilenameUtils.getExtension(file.getName());
-        return isExtensionAccepted(extension);
+        return isExtensionAccepted(extension) && isInsideConfinement(file);
+    }
+
+    private boolean isInsideConfinement(final File file) {
+        if (confinedTo == null) {
+            return true;
+        }
+        try {
+            if (file.toPath().toRealPath().startsWith(confinedTo.toRealPath())) {
+                return true;
+            }
+            log.warn("Ignoring '{}': it resolves outside of {}", file, confinedTo);
+        } catch (final IOException e) {
+            log.warn("Ignoring '{}': it cannot be resolved ({})", file, e.toString());
+        }
+        return false;
     }
 
     /**

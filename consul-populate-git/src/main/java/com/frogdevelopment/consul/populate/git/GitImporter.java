@@ -9,6 +9,7 @@ import jakarta.inject.Singleton;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.frogdevelopment.consul.populate.DataImporter;
+import com.frogdevelopment.consul.populate.files.FilesImporter;
 import com.frogdevelopment.consul.populate.files.JsonFilesImporter;
 import com.frogdevelopment.consul.populate.files.PropertiesFilesImporter;
 import com.frogdevelopment.consul.populate.files.YamlFilesImporter;
@@ -56,12 +57,14 @@ public class GitImporter implements DataImporter {
                 : rootPath.resolve(fileProperties.getTarget());
 
         // Delegate to the appropriate FilesImporter based on format
-        final DataImporter filesImporter = switch (fileProperties.getFormat()) {
+        final FilesImporter filesImporter = switch (fileProperties.getFormat()) {
             case JSON -> new JsonFilesImporter(rootPath, targetPath, objectMapper);
             case PROPERTIES -> new PropertiesFilesImporter(rootPath, targetPath);
             case YAML -> new YamlFilesImporter(rootPath, targetPath);
         };
 
+        // the content of a clone is not trusted: a symbolic link must not take a file from outside of it
+        filesImporter.confineTo(repositoryDirectory);
         return filesImporter.execute();
     }
 }

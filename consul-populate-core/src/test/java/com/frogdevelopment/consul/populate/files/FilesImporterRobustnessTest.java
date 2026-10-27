@@ -2,6 +2,7 @@ package com.frogdevelopment.consul.populate.files;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -134,6 +135,57 @@ class FilesImporterRobustnessTest {
                     .isExactlyInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("'application.yaml' and 'application.yml'")
                     .hasMessageContaining("'application'");
+        }
+    }
+
+    @Nested
+    class SymbolicLinks {
+
+        private Path repository;
+        private Path outside;
+
+        void setUpLinks() throws IOException {
+            repository = Files.createDirectories(tempDir.resolve("repository"));
+            outside = Files.createDirectories(tempDir.resolve("outside"));
+            Files.writeString(repository.resolve("application.yaml"), "from: repository\n");
+            Files.writeString(outside.resolve("secret.yaml"), "from: outside\n");
+            try {
+                Files.createSymbolicLink(repository.resolve("alias.yaml"), Path.of("application.yaml"));
+                Files.createSymbolicLink(repository.resolve("stolen.yaml"), Path.of("../outside/secret.yaml"));
+                Files.createSymbolicLink(repository.resolve("dangling.yaml"), Path.of("nowhere.yaml"));
+            } catch (final UnsupportedOperationException | IOException e) {
+                assumeTrue(false, "symbolic links are not available here: " + e);
+            }
+        }
+
+        @Test
+        void should_ignore_the_links_that_point_outside_when_confined() throws IOException {
+            // given
+            setUpLinks();
+            final var importer = new YamlFilesImporter(repository, repository);
+            importer.confineTo(repository);
+
+            // when
+            final var result = importer.execute();
+
+            // then - the file and the link that stays inside are read; the link to the outside, and the broken one, are not
+            assertThat(result).containsOnlyKeys("application", "alias");
+            assertThat(result.get("alias")).contains("from: repository");
+        }
+
+        @Test
+        void should_follow_every_link_by_default_as_a_kubernetes_config_map_needs() throws IOException {
+            // given - a ConfigMap volume is made of links to ..data/<file>, which are not inside the directory itself
+            setUpLinks();
+            final var importer = new YamlFilesImporter(repository, repository);
+
+            // when - the broken link is the only thing that cannot be read
+            final var caught = catchThrowable(importer::execute);
+
+            // then
+            assertThat(caught).isInstanceOf(RuntimeException.class);
+            Files.delete(repository.resolve("dangling.yaml"));
+            assertThat(importer.execute()).containsOnlyKeys("application", "alias", "stolen");
         }
     }
 
