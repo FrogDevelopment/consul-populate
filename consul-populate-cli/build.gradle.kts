@@ -68,6 +68,12 @@ tasks {
         archiveClassifier = ""
     }
 
+    // The plain jar is disabled, so the distributions bundle the file that shadowJar writes under the same name: Gradle 9
+    // refuses a task that uses the output of another one without depending on it.
+    named("distZip") { dependsOn(shadowJar) }
+    named("distTar") { dependsOn(shadowJar) }
+    named("startScripts") { dependsOn(shadowJar) }
+
     test {
         // https://github.com/stefanbirkner/system-lambda/issues/27
         systemProperty("java.security.manager", "allow")
