@@ -43,7 +43,9 @@ public class TogglePollHandler {
      *
      * @return {@code 200 OK} after toggling the polling state
      */
-    public HttpResponse<Void> handle() {
+    public synchronized HttpResponse<Void> handle() {
+        // synchronized: reading the value, flipping it and starting or stopping the job is one step, or two concurrent
+        // requests would lose a toggle or leave the job in the opposite state of the property
         final var currentValue = gitProperties.isPollEnabled();
         final var newValue = !currentValue;
         log.info("Toggle Git pull scheduled: {}", newValue);

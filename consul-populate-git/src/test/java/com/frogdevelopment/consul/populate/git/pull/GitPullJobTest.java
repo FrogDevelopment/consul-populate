@@ -6,11 +6,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.times;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -105,6 +111,41 @@ class GitPullJobTest {
     }
 
     @Nested
+    class Concurrency {
+
+        @Test
+        void start_shouldScheduleOnlyOnce_whenCalledBySeveralThreadsAtTheSameTime() throws Exception {
+            // given - scheduling is slow, which widens the window in which another caller sees no running job
+            given(gitProperties.getPollInterval()).willReturn(Duration.ofMinutes(5));
+            willAnswer(invocation -> {
+                TimeUnit.MILLISECONDS.sleep(50);
+                return scheduledFuture;
+            }).given(taskScheduler).scheduleWithFixedDelay(any(), any(), any(Runnable.class));
+            final var threads = 8;
+            final var start = new CountDownLatch(1);
+
+            // when
+            try (var executor = Executors.newFixedThreadPool(threads)) {
+                final var calls = new ArrayList<Future<?>>();
+                for (var i = 0; i < threads; i++) {
+                    calls.add(executor.submit(() -> {
+                        start.await();
+                        gitPullJob.start();
+                        return null;
+                    }));
+                }
+                start.countDown();
+                for (final var call : calls) {
+                    call.get(30, TimeUnit.SECONDS);
+                }
+            }
+
+            // then - one scheduled task, not eight (the extra ones could not be cancelled any more)
+            then(taskScheduler).should(times(1)).scheduleWithFixedDelay(any(), any(), any(Runnable.class));
+        }
+    }
+
+    @Nested
     class Pull {
 
         @BeforeEach
@@ -157,7 +198,7 @@ class GitPullJobTest {
             gitPullJob.stop();
 
             // then
-            then(scheduledFuture).should().cancel(true);
+            then(scheduledFuture).should().cancel(false);
         }
 
         @Test
@@ -171,7 +212,7 @@ class GitPullJobTest {
             gitPullJob.stop(); // Second stop
 
             // then
-            then(scheduledFuture).should(times(1)).cancel(true);
+            then(scheduledFuture).should(times(1)).cancel(false);
         }
 
         @Test
