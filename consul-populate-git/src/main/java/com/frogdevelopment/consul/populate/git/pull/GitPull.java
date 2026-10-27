@@ -118,6 +118,21 @@ public class GitPull {
         }
     }
 
+    /**
+     * Runs an action while no pull and no population is running, and none starts before it ends: for what must not
+     * happen under a pull, such as deleting the clone.
+     *
+     * @param action what to run
+     */
+    public void runExclusively(final Runnable action) {
+        lock.lock();
+        try {
+            action.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     private void fetchAndReset() throws GitAPIException {
         git.fetch()
                 .setRemote(Constants.DEFAULT_REMOTE_NAME)

@@ -4,12 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import jakarta.inject.Singleton;
 
 import org.apache.commons.io.FileUtils;
 
 import com.frogdevelopment.consul.populate.git.RepositoryDirectoryProvider;
+import com.frogdevelopment.consul.populate.git.pull.GitPull;
+import com.frogdevelopment.consul.populate.git.pull.GitPullJob;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Blocking;
@@ -27,24 +30,35 @@ import io.micronaut.runtime.server.event.ServerShutdownEvent;
 @Slf4j
 @Singleton
 @RequiredArgsConstructor
-@Requires(property = "consul.git.clean-up", value = StringUtils.TRUE, defaultValue = StringUtils.FALSE)
+@Requires(property = "consul.git.clean-up", value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
 public class GitCleanUp {
 
-    /** Provides the cloned git repository directory path */
+    /** Provides the directory that holds the cloned git repository */
     private final RepositoryDirectoryProvider repositoryDirectoryProvider;
+    private final GitPullJob gitPullJob;
+    private final GitPull gitPull;
 
     /**
-     * Deletes the cloned git repository directory on server shutdown.
+     * Deletes the temporary directory of the cloned git repository on server shutdown.
+     *
+     * <p>The pull job is stopped first and the deletion waits for the pull that may be running (and the population it
+     * leads to), so the clone is never deleted under a running pull.
      *
      * @param ignored the server shutdown event
      */
     @Blocking
     @EventListener
     public void onServerShutdownEvent(final ServerShutdownEvent ignored) {
+        gitPullJob.stop();
+        // empty when the repository was never requested: there is nothing to delete, and nothing is created to be deleted
+        repositoryDirectoryProvider.getWorkingDirectory()
+                .ifPresent(directory -> gitPull.runExclusively(() -> delete(directory)));
+    }
+
+    private static void delete(final Path directory) {
         try {
-            final var repositoryDirectory = repositoryDirectoryProvider.getRepository();
-            FileUtils.deleteDirectory(repositoryDirectory.toFile());
-            log.info("Local Git Repository {} deleted", repositoryDirectory);
+            FileUtils.deleteDirectory(directory.toFile());
+            log.info("Local Git Repository {} deleted", directory);
         } catch (final IOException e) {
             log.error("Failed to delete repository", e);
         }

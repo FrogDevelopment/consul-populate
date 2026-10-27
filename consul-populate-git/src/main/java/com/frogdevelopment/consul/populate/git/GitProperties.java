@@ -74,9 +74,10 @@ public class GitProperties {
     private Webhook webhook;
 
     /**
-     * Whether to delete the cloned repository on server shutdown (default: false)
+     * Whether to delete the cloned repository on server shutdown (default: true). Every start clones into a new
+     * temporary directory, so without it each restart leaves a full clone behind.
      */
-    private boolean cleanUp = false;
+    private boolean cleanUp = true;
 
     /**
      * File import settings (format, target, rootPath)

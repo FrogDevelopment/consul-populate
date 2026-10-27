@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jgit.api.Git;
@@ -289,6 +290,39 @@ class GitPullTest {
 
             // then
             assertThat(maxRunning.get()).isEqualTo(1);
+        }
+    }
+
+    @Nested
+    class Exclusivity {
+
+        @Test
+        void runExclusively_shouldWaitForTheRunningPullAndHoldBackTheNextOnes() throws Exception {
+            // given - a population that lasts until the test lets it end
+            final var populating = new CountDownLatch(1);
+            final var release = new CountDownLatch(1);
+            willAnswer(invocation -> {
+                populating.countDown();
+                release.await(30, TimeUnit.SECONDS);
+                return null;
+            }).given(populateService).populate();
+            final var ran = new AtomicBoolean();
+
+            try (var executor = Executors.newFixedThreadPool(2)) {
+                final var pulling = executor.submit(() -> gitPull.pull(SCHEDULED));
+                assertThat(populating.await(30, TimeUnit.SECONDS)).isTrue();
+
+                // when - the action asks for the lock while the pull holds it
+                final var exclusive = executor.submit(() -> gitPull.runExclusively(() -> ran.set(true)));
+                TimeUnit.MILLISECONDS.sleep(300);
+
+                // then - it has not run, it runs once the pull is over
+                assertThat(ran).isFalse();
+                release.countDown();
+                pulling.get(30, TimeUnit.SECONDS);
+                exclusive.get(30, TimeUnit.SECONDS);
+                assertThat(ran).isTrue();
+            }
         }
     }
 
