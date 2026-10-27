@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.SequencedMap;
 
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -43,7 +44,20 @@ public final class YamlFilesImporter extends FilesImporter {
     @Override
     protected SequencedMap<String, Object> readFile(@NonNull final File file) throws IOException {
         try (final var reader = Files.newBufferedReader(file.toPath())) {
-            return newYaml().load(reader);
+            final Object loaded = newYaml().load(reader);
+            if (loaded == null) {
+                return null;
+            }
+            if (!(loaded instanceof SequencedMap<?, ?> mapping)) {
+                throw new IOException("The top level of '%s' must be a mapping, not a %s"
+                        .formatted(file, loaded.getClass().getSimpleName()));
+            }
+            @SuppressWarnings("unchecked")
+            final var result = (SequencedMap<String, Object>) mapping;
+            return result;
+        } catch (final YAMLException e) {
+            // SnakeYAML reports the position but not the file
+            throw new IOException("Invalid YAML in '%s': %s".formatted(file, e.getMessage()), e);
         }
     }
 

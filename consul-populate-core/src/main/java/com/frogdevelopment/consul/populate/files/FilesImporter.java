@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SequencedMap;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -60,16 +61,29 @@ public abstract sealed class FilesImporter implements DataImporter
 
         try {
             final var result = new HashMap<String, String>();
+            final var fileOfKey = new HashMap<String, String>();
             for (final var entry : finalFiles.entrySet()) {
                 final var key = FilenameUtils.removeExtension(entry.getKey());
                 final var value = writeValueAsString(entry.getValue());
                 if (value.isEmpty()) {
                     log.warn("Skipping empty configurations for file '{}'", entry.getKey());
                 } else {
+                    final var other = fileOfKey.put(key, entry.getKey());
+                    if (other != null) {
+                        // the extension is not part of the key: one of the two would silently replace the other
+                        throw new IllegalArgumentException("The files '%s' and '%s' both map to the key '%s': keep only one of them"
+                                .formatted(Stream.of(other, entry.getKey()).sorted().toList().get(0),
+                                        Stream.of(other, entry.getKey()).sorted().toList().get(1), key));
+                    }
                     result.put(key, value);
                 }
             }
 
+            if (result.isEmpty()) {
+                // importing nothing would delete everything under the KV path
+                throw new IllegalStateException("There is nothing to import: every configuration file in " + rootPath
+                        + (rootPath.equals(targetPath) ? "" : " and " + targetPath) + " is empty");
+            }
             return result;
         } catch (final IOException e) {
             throw new IllegalStateException("Unable to process the configurations to import. Please check the error logs", e);
@@ -96,7 +110,7 @@ public abstract sealed class FilesImporter implements DataImporter
             }
             return dataMap;
         } catch (final IOException e) {
-            throw new IllegalStateException("Unable to read the configurations. Please check the error logs", e);
+            throw new IllegalStateException("Unable to read the configurations: " + e.getMessage(), e);
         }
     }
 
