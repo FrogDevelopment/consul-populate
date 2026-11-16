@@ -109,6 +109,15 @@ Custom webhook providers implement `WebhookPayloadHandler` as a `@Singleton` and
 `consul.git.webhook.type=CUSTOM`. A provider whose push can update several branches overrides `extractBranchNames`
 (the default wraps `extractBranchName`); the pull happens when the tracked branch is among them.
 
+## Documentation
+
+The user documentation is `README.md` (settings, defaults, rules for the files, endpoints, examples); there is no wiki.
+Update it in the same change as any setting, default or behaviour. A change that can break an existing setup goes in an
+upgrade section like "Upgrading from 1.x", and calls for a new major version.
+
+Releases are immutable on GitHub: a published release locks its tag name for good. Set `version` in `build.gradle.kts`
+on the commit to tag, and check that the build on it is green, before publishing the release.
+
 ## Testing
 
 JUnit 5 + Mockito + AssertJ. Integration tests use Testcontainers (Consul).  
