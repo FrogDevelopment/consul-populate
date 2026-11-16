@@ -467,53 +467,13 @@ deliveries.
 
 ### Usage
 
-#### Server Mode with Polling
-
-```yaml
-services:
-  consul-populate-server:
-    image: frogdevelopment/consul-populate-server:{version}
-    environment:
-      CONSUL_HOST: consul
-      CONSUL_PORT: 8500
-      CONSUL_KV_PREFIX: config/frog/my_app
-      CONSUL_GIT_URI: https://github.com/myorg/config-repo.git
-      CONSUL_GIT_TOKEN: ${GIT_TOKEN}
-      CONSUL_GIT_BRANCH: main
-      CONSUL_GIT_FILES_FORMAT: YAML
-      CONSUL_GIT_FILES_TARGET: dev
-      CONSUL_GIT_FILES_ROOT_PATH: configurations
-      CONSUL_GIT_POLL_ENABLED: true
-      CONSUL_GIT_POLL_INTERVAL: 5m
-```
-
-#### Server Mode with GitHub Webhook
-
-```yaml
-services:
-  consul-populate-server:
-    image: frogdevelopment/consul-populate-server:{version}
-    ports:
-      - "8080:8080"
-    environment:
-      CONSUL_HOST: consul
-      CONSUL_PORT: 8500
-      CONSUL_KV_PREFIX: config/frog/my_app
-      CONSUL_GIT_URI: https://github.com/myorg/config-repo.git
-      CONSUL_GIT_TOKEN: ${GIT_TOKEN}
-      CONSUL_GIT_BRANCH: main
-      CONSUL_GIT_FILES_FORMAT: YAML
-      CONSUL_GIT_FILES_TARGET: dev
-      CONSUL_GIT_FILES_ROOT_PATH: configurations
-      CONSUL_GIT_WEBHOOK_TYPE: GITHUB
-      CONSUL_GIT_WEBHOOK_SECRET: ${WEBHOOK_SECRET}
-```
+#### Configuring the GitHub webhook
 
 Configure your GitHub repository webhook to:
 
 - **Payload URL**: `http://your-server:8080/git/webhook`
 - **Content type**: `application/json`
-- **Secret**: Same as `CONSUL_GIT_WEBHOOK_SECRET`
+- **Secret**: Same as `consul.git.webhook.secret`
 - **Events**: Just the push event
 
 #### CLI Mode (One-shot)
