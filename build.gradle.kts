@@ -5,7 +5,7 @@ plugins {
     jacoco
 }
 
-version = "1.4.0-SNAPSHOT"
+version = "1.4.0"
 group = "com.frogdevelopment.consul.populate"
 
 repositories {
