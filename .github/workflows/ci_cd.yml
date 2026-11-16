@@ -42,7 +42,7 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       # Whether a build is a release comes from the version in build.gradle.kts, not from the tag: without this check a
       # release published from a commit that still has the previous SNAPSHOT version goes green and publishes nothing
@@ -93,7 +93,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Generate package
         run: ./gradlew publish
