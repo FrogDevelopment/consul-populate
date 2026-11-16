@@ -26,7 +26,7 @@ import io.micronaut.core.util.StringUtils;
  * whatever the repository configuration says. Other transports (such as SSH) are left alone.
  *
  * @author Le Gall Benoît
- * @since 1.4.0
+ * @since 2.0.0
  */
 public final class GitTransportConfigCallback implements TransportConfigCallback {
 

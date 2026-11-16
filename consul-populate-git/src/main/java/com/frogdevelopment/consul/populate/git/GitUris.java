@@ -11,7 +11,7 @@ import org.eclipse.jgit.transport.URIish;
  * Helpers on the URI of the git repository.
  *
  * @author Le Gall Benoît
- * @since 1.4.0
+ * @since 2.0.0
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class GitUris {

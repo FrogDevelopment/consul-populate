@@ -16,7 +16,7 @@ import io.micronaut.core.util.StringUtils;
  * <p>Set {@code consul.git.webhook.allow-unsigned=true} to explicitly accept unsigned webhooks.
  *
  * @author Le Gall Benoît
- * @since 1.4.0
+ * @since 2.0.0
  * @see GitProperties.Webhook
  */
 @Slf4j

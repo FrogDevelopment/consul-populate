@@ -64,7 +64,7 @@ public interface WebhookPayloadHandler {
      *
      * @param payload the JSON payload from the webhook request
      * @return the branch names if they can be extracted, or an empty set if none was found
-     * @since 1.4.0
+     * @since 2.0.0
      */
     default Set<String> extractBranchNames(final JsonNode payload) {
         return extractBranchName(payload).map(Set::of).orElseGet(Set::of);
