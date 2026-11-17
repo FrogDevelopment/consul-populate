@@ -1,7 +1,7 @@
 plugins {
     java
     id("com.frogdevelopment.jreleaser.deploy-convention")
-    id("org.sonarqube") version "7.5.0.8588"
+    id("org.sonarqube") version "7.6.0.18749"
     jacoco
 }
 
